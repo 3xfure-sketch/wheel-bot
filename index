@@ -1,218 +1,150 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Колесо Фортуны</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1a1a1a;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .wheel-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+        }
+        canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 5px solid #e2b007;
+            box-shadow: 0 0 20px rgba(226, 176, 7, 0.5);
+        }
+        .pointer {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 25px solid #ff4757;
+            z-index: 10;
+        }
+        button {
+            margin-top: 30px;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #fff;
+            background: linear-gradient(45deg, #ff4757, #ff6b81);
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255, 71, 87, 0.4);
+            transition: transform 0.1s;
+        }
+        button:active {
+            transform: scale(0.95);
+        }
+        #result {
+            margin-top: 20px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #2ed573;
+        }
+    </style>
+</head>
+<body>
 
-* {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-        user-select: none;
-    }
+    <h2>Колесо Фортуны 🎡</h2>
 
-    body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        background-color: var(--bg-color);
-        color: var(--text-color);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        min-height: 100vh;
-        padding: 20px;
-        overflow: hidden;
-    }
-
-    .container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 25px;
-        width: 100%;
-        max-width: 400px;
-    }
-
-    h1 {
-        font-size: 24px;
-        text-align: center;
-        font-weight: 700;
-    }
-
-    .wheel-wrapper {
-        position: relative;
-        width: 280px;
-        height: 280px;
-    }
-
-    /* Указатель стрелки */
-    .arrow {
-        position: absolute;
-        top: -15px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 0;
-        height: 0;
-        border-left: 15px solid transparent;
-        border-right: 15px solid transparent;
-        border-top: 25px solid #ff0055;
-        z-index: 10;
-        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
-    }
-
-    /* Холст колеса */
-    canvas {
-        width: 100%;
-        height: 100%;
-        border-radius: 50%;
-        box-shadow: 0 0 20px rgba(0,0,0,0.4);
-        transition: transform 4s cubic-bezier(0.15, 0.99, 0.18, 0.99);
-    }
-
-    .spin-btn {
-        background-color: var(--button-color);
-        color: var(--button-text-color);
-        border: none;
-        padding: 14px 40px;
-        font-size: 18px;
-        font-weight: bold;
-        border-radius: 25px;
-        cursor: pointer;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        transition: transform 0.1s, opacity 0.2s;
-        width: 80%;
-        max-width: 250px;
-    }
-
-    .spin-btn:active {
-        transform: scale(0.96);
-    }
-
-    .spin-btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-
-    .result {
-        font-size: 20px;
-        font-weight: bold;
-        text-align: center;
-        min-height: 28px;
-        color: #4eef90;
-    }
-</style>
-
-
-<div class="container">
-    <h1 id="greeting">Крутите колесо! ??</h1>
-    
-    <div class="wheel-wrapper">
-        <div class="arrow"></div>
+    <div class="wheel-container">
+        <div class="pointer"></div>
         <canvas id="wheel" width="300" height="300"></canvas>
     </div>
 
-    <button class="spin-btn" id="spinBtn" onclick="spin()">ВРАЩАТЬ</button>
-    <div class="result" id="resultText"></div>
-</div>
+    <button id="spinBtn" onclick="spin()">ВРАЩАТЬ!</button>
+    <div id="result"></div>
 
-<script>
-    // Инициализация Telegram WebApp
-    const tg = window.Telegram.WebApp;
-    tg.expand(); // Разворачиваем на полный экран
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand(); // Разворачиваем окно на весь экран
 
-    // Приветствие пользователя из Telegram
-    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-        document.getElementById('greeting').innerText = `Удачи, ${tg.initDataUnsafe.user.first_name}! ??`;
-    }
-
-    const canvas = document.getElementById('wheel');
-    const ctx = canvas.getContext('2d');
-    const spinBtn = document.getElementById('spinBtn');
-    const resultText = document.getElementById('resultText');
-
-    // Награды и цвета секторов
-    const prizes = [
-        { text: "100 ??", color: "#f39c12" },
-        { text: "Попробуй снова", color: "#e74c3c" },
-        { text: "500 ??", color: "#9b59b6" },
-        { text: "Джекпот! ??", color: "#2ecc71" },
-        { text: "0 ??", color: "#34495e" },
-        { text: "250 ??", color: "#3498db" }
-    ];
-
-    const numSegments = prizes.length;
-    const arc = (2 * Math.PI) / numSegments;
-    let currentRotation = 0;
-    let isSpinning = false;
-
-    // Отрисовка колеса
-    function drawWheel() {
-        const centerX = canvas.width / 2;
-        const centerY = canvas.height / 2;
-        const radius = canvas.width / 2 - 5;
-
-        for (let i = 0; i < numSegments; i++) {
-            const angle = i * arc;
-            
-            // Сектор
-            ctx.beginPath();
-            ctx.fillStyle = prizes[i].color;
-            ctx.moveTo(centerX, centerY);
-            ctx.arc(centerX, centerY, radius, angle, angle + arc);
-            ctx.lineTo(centerX, centerY);
-            ctx.fill();
-            ctx.stroke();
-
-            // Текст
-            ctx.save();
-            ctx.translate(centerX, centerY);
-            ctx.rotate(angle + arc / 2);
-            ctx.textAlign = "right";
-            ctx.fillStyle = "#ffffff";
-            ctx.font = "bold 16px sans-serif";
-            ctx.fillText(prizes[i].text, radius - 20, 6);
-            ctx.restore();
-        }
-    }
-
-    // Функция вращения
-    function spin() {
-        if (isSpinning) return;
-        isSpinning = true;
-        spinBtn.disabled = true;
-        resultText.innerText = "";
-
-        // Генерация рандомного угла (минимум 5 полных оборотов + случайный сектор)
-        const extraRounds = 5 + Math.floor(Math.random() * 5);
-        const randomSector = Math.floor(Math.random() * numSegments);
+        const canvas = document.getElementById('wheel');
+        const ctx = canvas.getContext('2d');
+        const sectors = ["100 $", "Попробуй еще", "500 $", "Джекпот!", "0 $", "50 $"];
+        const colors = ["#ff4757", "#2ed573", "#1e90ff", "#ffa502", "#9b59b6", "#eccc68"];
         
-        // Расчет конечного угла остановки
-        const sectorAngle = (360 / numSegments);
-        const targetDegree = (extraRounds * 360) + (randomSector * sectorAngle) + (sectorAngle / 2);
+        let currentAngle = 0;
+        let isSpinning = false;
 
-        currentRotation += targetDegree;
-        canvas.style.transform = `rotate(${currentRotation}deg)`;
+        function drawWheel() {
+            const numSectors = sectors.length;
+            const arc = (2 * Math.PI) / numSectors;
 
-        // Вибрация Telegram при нажатии
-        if (tg.HapticFeedback) {
-            tg.HapticFeedback.impactOccurred('medium');
+            for (let i = 0; i < numSectors; i++) {
+                const angle = currentAngle + i * arc;
+                ctx.beginPath();
+                ctx.fillStyle = colors[i % colors.length];
+                ctx.moveTo(150, 150);
+                ctx.arc(150, 150, 150, angle, angle + arc);
+                ctx.lineTo(150, 150);
+                ctx.fill();
+
+                // Текст
+                ctx.save();
+                ctx.translate(150, 150);
+                ctx.rotate(angle + arc / 2);
+                ctx.textAlign = "right";
+                ctx.fillStyle = "#fff";
+                ctx.font = "bold 16px Arial";
+                ctx.fillText(sectors[i], 130, 5);
+                ctx.restore();
+            }
         }
 
-        // Ожидание окончания анимации (4 секунды)
-        setTimeout(() => {
-            isSpinning = false;
-            spinBtn.disabled = false;
+        drawWheel();
 
-            // Определение выигранного сектора (с учетом вращения)
-            const actualDegree = currentRotation % 360;
-            // Указатель сверху (270 градусов относительно системы координат canvas)
-            const winningIndex = Math.floor((360 - (actualDegree % 360) + 270) % 360 / sectorAngle);
-            const wonPrize = prizes[winningIndex].text;
+        function spin() {
+            if (isSpinning) return;
+            isSpinning = true;
+            document.getElementById('result').innerText = "";
 
-            resultText.innerText = `Вы выиграли: ${wonPrize}`;
+            const spinAngle = Math.floor(Math.random() * 360) + 1440; // Минимум 4 оборота
+            const duration = 4000;
+            const start = performance.now();
 
-            // Уведомление с эффектом успешного действия
-            if (tg.HapticFeedback) {
-                tg.HapticFeedback.notificationOccurred('success');
+            function animate(time) {
+                let elapsed = time - start;
+                let progress = Math.min(elapsed / duration, 1);
+                // Замедление к концу
+                let easeOut = 1 - Math.pow(1 - progress, 3);
+                
+                currentAngle = (easeOut * spinAngle * Math.PI / 180) % (2 * Math.PI);
+                ctx.clearRect(0, 0, 300, 300);
+                drawWheel();
+
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    isSpinning = false;
+                    document.getElementById('result').innerText = "Поздравляем!";
+                }
             }
-        }, 4000);
-    }
 
-    // Инициализация отрисовки
-    drawWheel();
-</script>
+            requestAnimationFrame(animate);
+        }
+    </script>
+</body>
+</html>

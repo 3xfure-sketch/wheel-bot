@@ -233,4 +233,302 @@
 
         <button class="btn" id="spinBtn" onclick="startSpin()">SPIN WHEEL</button>
         <div id="resultMsg"></div>
-        <button class="btn btn-secondary" onclick="switchPage('home')" id="t
+        <button class="btn btn-secondary" onclick="switchPage('home')" id="t-backBtn1">Back to Menu</button>
+    </div>
+
+    <!-- PROFILE PAGE -->
+    <div id="page-profile" class="page">
+        <h2 id="t-profileTitle">Personal Account 👤</h2>
+        <div style="background: #1e293b; padding: 15px; border-radius: 12px; width: 100%; margin-bottom: 15px;">
+            <p><span id="t-statusLabel">Status</span>: <b style="color: #f59e0b;">Standard</b></p>
+            <p style="margin-top: 8px;"><span id="t-balanceLabel">Balance</span>: <b id="profileStars">0 ⭐</b></p>
+            <p style="margin-top: 8px;"><span id="t-spinsLabel">Spins available</span>: <b id="profileSpins">1</b></p>
+        </div>
+        <button class="btn btn-secondary" onclick="switchPage('home')" id="t-backBtn2">Back to Menu</button>
+    </div>
+
+    <!-- SHOP PAGE -->
+    <div id="page-shop" class="page">
+        <h2 id="t-shopTitle">Chest Shop 🎁</h2>
+        <div style="background: #1e293b; padding: 15px; border-radius: 12px; width: 100%; text-align: center; margin-bottom: 15px;">
+            <p id="t-shopDesc">Buy additional spins with Telegram Stars.</p>
+            <button class="btn" onclick="buySpins(3, 120)" style="margin-top: 15px;" id="t-buyBtn">Buy 3 Spins (120⭐)</button>
+        </div>
+        <button class="btn btn-secondary" onclick="switchPage('home')" id="t-backBtn3">Back to Menu</button>
+    </div>
+
+    <!-- NAVBAR -->
+    <div class="navbar">
+        <button class="nav-item active" onclick="switchPage('home')" id="nav-home">
+            <span class="nav-icon">🏠</span> <span id="t-navMenu">Menu</span>
+        </button>
+        <button class="nav-item" onclick="switchPage('wheel')" id="nav-wheel">
+            <span class="nav-icon">🎡</span> <span id="t-navWheel">Wheel</span>
+        </button>
+        <button class="nav-item" onclick="switchPage('profile')" id="nav-profile">
+            <span class="nav-icon">👤</span> <span id="t-navProfile">Profile</span>
+        </button>
+        <button class="nav-item" onclick="switchPage('shop')" id="nav-shop">
+            <span class="nav-icon">🎁</span> <span id="t-navShop">Shop</span>
+        </button>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+
+        const user = tg.initDataUnsafe?.user;
+        document.getElementById('userId').innerText = user ? user.id : "486646287";
+
+        let currentLang = localStorage.getItem('appLang') || 'en';
+
+        // Считываем список элементов из URL от бота
+        const urlParams = new URLSearchParams(window.location.search);
+        const itemsParam = urlParams.get('items');
+        
+        let availableSectors = [];
+        if (itemsParam) {
+            try {
+                availableSectors = JSON.parse(decodeURIComponent(itemsParam));
+            } catch(e) {
+                console.log("Error parsing items:", e);
+            }
+        }
+
+        if (!availableSectors || availableSectors.length === 0) {
+            availableSectors = ["Видео #1", "Эксклюзив #2", "Секретный ролик #3", "VIP Видео #4", "Бонус клип #5"];
+        }
+
+        let colors = ["#ef4444", "#3b82f6", "#8b5cf6", "#f59e0b", "#64748b", "#10b981"];
+
+        const i18n = {
+            en: {
+                welcome: "Welcome to the Wheel of Fortune!",
+                tryLuck: "Try Your Luck (Wheel)",
+                profile: "Personal Account",
+                chestShop: "Chest Shop",
+                coinFlip: "Coin Flip (10⭐)",
+                diceRoll: "Dice Roll (10⭐)",
+                weeklyTourney: "Weekly Tournament",
+                promoCode: "Promo Code",
+                refSystem: "Referral System",
+                buyVip: "Buy VIP",
+                language: "Language: English 🇬🇧",
+                wheelTitle: "Try Your Luck 🎡",
+                wheelSub: "Unique videos without repetitions",
+                spinBtn: "SPIN WHEEL",
+                backBtn: "Back to Menu",
+                profileTitle: "Personal Account 👤",
+                statusLabel: "Status",
+                balanceLabel: "Balance",
+                spinsLabel: "Spins available",
+                shopTitle: "Chest Shop 🎁",
+                shopDesc: "Buy additional spins with Telegram Stars.",
+                buyBtn: "Buy 3 Spins (120⭐)",
+                navMenu: "Menu",
+                navWheel: "Wheel",
+                navProfile: "Profile",
+                navShop: "Shop",
+                spinning: "Spinning...",
+                won: "Unlocked: ",
+                allWon: "All videos unlocked!"
+            },
+            ru: {
+                welcome: "Добро пожаловать в Колесо Фортуны!",
+                tryLuck: "Испытать удачу (Колесо)",
+                profile: "Личный кабинет",
+                chestShop: "Магазин Сундуков",
+                coinFlip: "Орёл и Решка (10⭐)",
+                diceRoll: "Бросок кубика (10⭐)",
+                weeklyTourney: "Турнир недели",
+                promoCode: "Промокод",
+                refSystem: "Реферальная система",
+                buyVip: "Buy VIP",
+                language: "Язык: Русский 🇷🇺",
+                wheelTitle: "Испытать удачу 🎡",
+                wheelSub: "Уникальные видео без повторений",
+                spinBtn: "КРУТИТЬ КОЛЕСО",
+                backBtn: "Назад в меню",
+                profileTitle: "Личный кабинет 👤",
+                statusLabel: "Статус",
+                balanceLabel: "Баланс",
+                spinsLabel: "Доступно спинов",
+                shopTitle: "Магазин Сундуков 🎁",
+                shopDesc: "Покупайте дополнительные попытки за Telegram Stars.",
+                buyBtn: "Купить 3 спина (120⭐)",
+                navMenu: "Меню",
+                navWheel: "Колесо",
+                navProfile: "Профиль",
+                navShop: "Магазин",
+                spinning: "Вращаем...",
+                won: "Выиграно: ",
+                allWon: "Все видео разблокированы!"
+            }
+        };
+
+        function showPopup(title, message) {
+            if (tg.showPopup) {
+                tg.showPopup({ title: title, message: message, buttons: [{ type: 'ok' }] });
+            } else {
+                alert(title + ": " + message);
+            }
+        }
+
+        function updateLanguage() {
+            const l = i18n[currentLang];
+            document.getElementById('t-welcome').innerText = l.welcome;
+            document.getElementById('t-tryLuck').innerText = l.tryLuck;
+            document.getElementById('t-profile').innerText = l.profile;
+            document.getElementById('t-chestShop').innerText = l.chestShop;
+            document.getElementById('t-coinFlip').innerText = l.coinFlip;
+            document.getElementById('t-diceRoll').innerText = l.diceRoll;
+            document.getElementById('t-weeklyTourney').innerText = l.weeklyTourney;
+            document.getElementById('t-promoCode').innerText = l.promoCode;
+            document.getElementById('t-refSystem').innerText = l.refSystem;
+            document.getElementById('t-buyVip').innerText = l.buyVip;
+            document.getElementById('t-language').innerText = l.language;
+            document.getElementById('t-wheelTitle').innerText = l.wheelTitle;
+            document.getElementById('t-wheelSub').innerText = l.wheelSub;
+            document.getElementById('spinBtn').innerText = l.spinBtn;
+            document.getElementById('t-backBtn1').innerText = l.backBtn;
+            document.getElementById('t-backBtn2').innerText = l.backBtn;
+            document.getElementById('t-backBtn3').innerText = l.backBtn;
+            document.getElementById('t-profileTitle').innerText = l.profileTitle;
+            document.getElementById('t-statusLabel').innerText = l.statusLabel;
+            document.getElementById('t-balanceLabel').innerText = l.balanceLabel;
+            document.getElementById('t-spinsLabel').innerText = l.spinsLabel;
+            document.getElementById('t-shopTitle').innerText = l.shopTitle;
+            document.getElementById('t-shopDesc').innerText = l.shopDesc;
+            document.getElementById('t-buyBtn').innerText = l.buyBtn;
+            document.getElementById('t-navMenu').innerText = l.navMenu;
+            document.getElementById('t-navWheel').innerText = l.navWheel;
+            document.getElementById('t-navProfile').innerText = l.navProfile;
+            document.getElementById('t-navShop').innerText = l.navShop;
+        }
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'en' ? 'ru' : 'en';
+            localStorage.setItem('appLang', currentLang);
+            updateLanguage();
+        }
+
+        function switchPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            
+            document.getElementById('page-' + pageId).classList.add('active');
+            if(document.getElementById('nav-' + pageId)) {
+                document.getElementById('nav-' + pageId).classList.add('active');
+            }
+        }
+
+        const canvas = document.getElementById('wheel');
+        const ctx = canvas.getContext('2d');
+        let currentAngle = 0;
+        let isSpinning = false;
+
+        function drawWheel() {
+            ctx.clearRect(0, 0, 280, 280);
+            if (availableSectors.length === 0) {
+                ctx.fillStyle = "#94a3b8";
+                ctx.font = "bold 14px Arial";
+                ctx.textAlign = "center";
+                ctx.fillText(i18n[currentLang].allWon, 140, 140);
+                return;
+            }
+
+            const arc = (2 * Math.PI) / availableSectors.length;
+            for (let i = 0; i < availableSectors.length; i++) {
+                const angle = currentAngle + i * arc;
+                ctx.beginPath();
+                ctx.fillStyle = colors[i % colors.length];
+                ctx.moveTo(140, 140);
+                ctx.arc(140, 140, 140, angle, angle + arc);
+                ctx.lineTo(140, 140);
+                ctx.fill();
+
+                ctx.save();
+                ctx.translate(140, 140);
+                ctx.rotate(angle + arc / 2);
+                ctx.textAlign = "right";
+                ctx.fillStyle = "#ffffff";
+                ctx.font = "bold 11px Arial";
+                ctx.fillText("🎬 " + availableSectors[i], 120, 4);
+                ctx.restore();
+            }
+        }
+        drawWheel();
+        updateLanguage();
+
+        function startSpin() {
+            if (isSpinning || availableSectors.length === 0) return;
+            isSpinning = true;
+            document.getElementById('spinBtn').disabled = true;
+            document.getElementById('resultMsg').innerText = i18n[currentLang].spinning;
+            document.getElementById('previewCard').classList.remove('unlocked');
+            document.getElementById('lockIcon').style.display = 'block';
+            document.getElementById('centerPreviewText').innerText = "🎬 ???";
+
+            const winningIndex = Math.floor(Math.random() * availableSectors.length);
+            const sectorArc = (2 * Math.PI) / availableSectors.length;
+            const targetAngle = (2 * Math.PI) - (winningIndex * sectorArc) - (sectorArc / 2);
+            const totalRotation = currentAngle + (5 * 2 * Math.PI) + (targetAngle - (currentAngle % (2 * Math.PI)));
+
+            const duration = 4000;
+            const startTime = performance.now();
+
+            function animate(time) {
+                let elapsed = time - startTime;
+                let progress = Math.min(elapsed / duration, 1);
+                let easeOut = 1 - Math.pow(1 - progress, 4);
+
+                currentAngle = easeOut * totalRotation;
+                drawWheel();
+
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    isSpinning = false;
+                    const wonPrize = availableSectors[winningIndex];
+                    
+                    // Исключаем выигранный видеоролик из колеса
+                    availableSectors.splice(winningIndex, 1);
+                    drawWheel();
+
+                    document.getElementById('centerPreviewText').innerText = "🎬 " + wonPrize;
+                    document.getElementById('previewCard').classList.add('unlocked');
+                    document.getElementById('lockIcon').style.display = 'none';
+                    document.getElementById('resultMsg').innerText = i18n[currentLang].won + wonPrize;
+
+                    if (availableSectors.length > 0) {
+                        document.getElementById('spinBtn').disabled = false;
+                    }
+
+                    try {
+                        tg.sendData(JSON.stringify({
+                            action: "spin_win",
+                            prize: wonPrize
+                        }));
+                    } catch(e) {
+                        console.log("sendData error:", e);
+                    }
+                }
+            }
+            requestAnimationFrame(animate);
+        }
+
+        function buySpins(count, price) {
+            try {
+                tg.sendData(JSON.stringify({
+                    action: "buy_stars",
+                    count: count,
+                    price: price
+                }));
+            } catch(e) {
+                showPopup("Shop", `Order ${count} spins for ${price}⭐`);
+            }
+        }
+    </script>
+</body>
+</html>

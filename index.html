@@ -327,4 +327,161 @@
                 wheelSub: "Бесплатный спин раз в 24 часа",
                 spinBtn: "КРУТИТЬ КОЛЕСО",
                 backBtn: "Назад в меню",
-                profileTitle: "
+                profileTitle: "Личный кабинет 👤",
+                statusLabel: "Статус",
+                balanceLabel: "Баланс",
+                spinsLabel: "Доступно спинов",
+                shopTitle: "Магазин Сундуков 🎁",
+                shopDesc: "Здесь вы можете покупать попытки и сундуки за звезды.",
+                buyBtn: "Купить 3 спина (120⭐)",
+                navMenu: "Меню",
+                navWheel: "Колесо",
+                navProfile: "Профиль",
+                navShop: "Магазин",
+                spinning: "Вращаем...",
+                won: "Выиграно: "
+            }
+        };
+
+        function showPopup(title, message) {
+            if (tg.showPopup) {
+                tg.showPopup({ title: title, message: message, buttons: [{ type: 'ok' }] });
+            } else {
+                alert(title + ": " + message);
+            }
+        }
+
+        function updateLanguage() {
+            const l = i18n[currentLang];
+            document.getElementById('t-welcome').innerText = l.welcome;
+            document.getElementById('t-tryLuck').innerText = l.tryLuck;
+            document.getElementById('t-profile').innerText = l.profile;
+            document.getElementById('t-chestShop').innerText = l.chestShop;
+            document.getElementById('t-coinFlip').innerText = l.coinFlip;
+            document.getElementById('t-diceRoll').innerText = l.diceRoll;
+            document.getElementById('t-weeklyTourney').innerText = l.weeklyTourney;
+            document.getElementById('t-promoCode').innerText = l.promoCode;
+            document.getElementById('t-refSystem').innerText = l.refSystem;
+            document.getElementById('t-buyVip').innerText = l.buyVip;
+            document.getElementById('t-language').innerText = l.language;
+            document.getElementById('t-wheelTitle').innerText = l.wheelTitle;
+            document.getElementById('t-wheelSub').innerText = l.wheelSub;
+            document.getElementById('spinBtn').innerText = l.spinBtn;
+            document.getElementById('t-backBtn1').innerText = l.backBtn;
+            document.getElementById('t-backBtn2').innerText = l.backBtn;
+            document.getElementById('t-backBtn3').innerText = l.backBtn;
+            document.getElementById('t-profileTitle').innerText = l.profileTitle;
+            document.getElementById('t-statusLabel').innerText = l.statusLabel;
+            document.getElementById('t-balanceLabel').innerText = l.balanceLabel;
+            document.getElementById('t-spinsLabel').innerText = l.spinsLabel;
+            document.getElementById('t-shopTitle').innerText = l.shopTitle;
+            document.getElementById('t-shopDesc').innerText = l.shopDesc;
+            document.getElementById('t-buyBtn').innerText = l.buyBtn;
+            document.getElementById('t-navMenu').innerText = l.navMenu;
+            document.getElementById('t-navWheel').innerText = l.navWheel;
+            document.getElementById('t-navProfile').innerText = l.navProfile;
+            document.getElementById('t-navShop').innerText = l.navShop;
+        }
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'en' ? 'ru' : 'en';
+            localStorage.setItem('appLang', currentLang);
+            updateLanguage();
+        }
+
+        function switchPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            
+            document.getElementById('page-' + pageId).classList.add('active');
+            if(document.getElementById('nav-' + pageId)) {
+                document.getElementById('nav-' + pageId).classList.add('active');
+            }
+        }
+
+        const sectors = ["Контент №1", "Пусто", "VIP Контент", "Джекпот!", "Скидка 50%", "Эксклюзив"];
+        const colors = ["#ef4444", "#3b82f6", "#8b5cf6", "#f59e0b", "#64748b", "#10b981"];
+        const canvas = document.getElementById('wheel');
+        const ctx = canvas.getContext('2d');
+        let currentAngle = 0;
+        let isSpinning = false;
+
+        function drawWheel() {
+            const arc = (2 * Math.PI) / sectors.length;
+            for (let i = 0; i < sectors.length; i++) {
+                const angle = currentAngle + i * arc;
+                ctx.beginPath();
+                ctx.fillStyle = colors[i % colors.length];
+                ctx.moveTo(140, 140);
+                ctx.arc(140, 140, 140, angle, angle + arc);
+                ctx.lineTo(140, 140);
+                ctx.fill();
+
+                ctx.save();
+                ctx.translate(140, 140);
+                ctx.rotate(angle + arc / 2);
+                ctx.textAlign = "right";
+                ctx.fillStyle = "#ffffff";
+                ctx.font = "bold 12px Arial";
+                ctx.fillText(sectors[i], 120, 4);
+                ctx.restore();
+            }
+        }
+        drawWheel();
+        updateLanguage();
+
+        function startSpin() {
+            if (isSpinning) return;
+            isSpinning = true;
+            document.getElementById('spinBtn').disabled = true;
+            document.getElementById('resultMsg').innerText = i18n[currentLang].spinning;
+            document.getElementById('previewCard').classList.remove('unlocked');
+            document.getElementById('lockIcon').style.display = 'block';
+
+            const winningIndex = Math.floor(Math.random() * sectors.length);
+            const sectorArc = (2 * Math.PI) / sectors.length;
+            const targetAngle = (2 * Math.PI) - (winningIndex * sectorArc) - (sectorArc / 2);
+            const totalRotation = currentAngle + (5 * 2 * Math.PI) + (targetAngle - (currentAngle % (2 * Math.PI)));
+
+            const duration = 4000;
+            const startTime = performance.now();
+
+            function animate(time) {
+                let elapsed = time - startTime;
+                let progress = Math.min(elapsed / duration, 1);
+                let easeOut = 1 - Math.pow(1 - progress, 4);
+
+                currentAngle = easeOut * totalRotation;
+                ctx.clearRect(0, 0, 280, 280);
+                drawWheel();
+
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    isSpinning = false;
+                    document.getElementById('spinBtn').disabled = false;
+                    const prize = sectors[winningIndex];
+                    
+                    document.getElementById('previewCard').classList.add('unlocked');
+                    document.getElementById('lockIcon').style.display = 'none';
+                    document.getElementById('resultMsg').innerText = i18n[currentLang].won + prize;
+
+                    try {
+                        tg.sendData(JSON.stringify({
+                            action: "spin_win",
+                            prize: prize
+                        }));
+                    } catch(e) {
+                        console.log("sendData error:", e);
+                    }
+                }
+            }
+            requestAnimationFrame(animate);
+        }
+
+        function buySpins(count, price) {
+            showPopup("Purchase", `Ordering ${count} spins for ${price}⭐ Stars`);
+        }
+    </script>
+</body>
+</html>

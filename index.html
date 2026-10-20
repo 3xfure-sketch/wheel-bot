@@ -3,219 +3,372 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Колесо Фортуны</title>
+    <title>Secret Spin Mini App</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #121212;
-            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding-bottom: 70px;
+            user-select: none;
+        }
+        
+        /* Шапка профиля */
+        .profile-header {
+            width: 100%;
+            background: #1e293b;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #334155;
+            font-size: 14px;
+        }
+        .profile-info span { color: #f59e0b; font-weight: bold; }
+
+        /* Контейнер страниц */
+        .page {
+            display: none;
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            flex-direction: column;
+            align-items: center;
+        }
+        .page.active { display: flex; }
+
+        h2 { margin-bottom: 15px; color: #f59e0b; text-align: center; font-size: 20px; }
+
+        /* Сетка главного меню (как на скриншоте) */
+        .menu-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            width: 100%;
+            margin-top: 15px;
+        }
+        .menu-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            padding: 15px;
+            border-radius: 14px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            user-select: none;
-        }
-        h2 {
-            margin-bottom: 10px;
-            color: #fbc531;
-            text-shadow: 0 0 10px rgba(251, 197, 49, 0.4);
-        }
-        .info {
+            gap: 8px;
             font-size: 14px;
-            color: #b2bec3;
-            margin-bottom: 15px;
+            font-weight: 600;
         }
-        .wheel-container {
+        .menu-card:active { transform: scale(0.96); background: #334155; }
+        .menu-card.full { grid-column: span 2; }
+        .menu-icon { font-size: 24px; }
+
+        /* Колесо Фортуны */
+        .wheel-box {
             position: relative;
-            width: 300px;
-            height: 300px;
+            width: 280px;
+            height: 280px;
+            margin: 15px 0;
         }
         canvas {
             width: 100%;
             height: 100%;
             border-radius: 50%;
-            border: 6px solid #fbc531;
-            box-shadow: 0 0 25px rgba(251, 197, 49, 0.3);
+            border: 5px solid #f59e0b;
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
         }
         .pointer {
             position: absolute;
-            top: -12px;
+            top: -10px;
             left: 50%;
             transform: translateX(-50%);
             width: 0;
             height: 0;
-            border-left: 18px solid transparent;
-            border-right: 18px solid transparent;
-            border-top: 30px solid #e1b12c;
+            border-left: 14px solid transparent;
+            border-right: 14px solid transparent;
+            border-top: 24px solid #ef4444;
             z-index: 10;
-            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
         }
-        button {
-            margin-top: 20px;
-            padding: 14px 35px;
-            font-size: 18px;
+        .preview-card {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            background: #1e293b;
+            border: 3px solid #f59e0b;
+            display: flex; align-items: center; justify-content: center;
+            z-index: 5;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+            overflow: hidden;
+        }
+        .blur-content {
+            width: 100%; height: 100%;
+            background: linear-gradient(45deg, #ff007f, #7f00ff);
+            filter: blur(6px) brightness(0.7);
+            transition: filter 0.5s;
+        }
+        .preview-card.unlocked .blur-content { filter: blur(0px) brightness(1); }
+        .lock-icon { position: absolute; font-size: 18px; z-index: 6; }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
             font-weight: bold;
-            color: #121212;
-            background: linear-gradient(45deg, #fbc531, #4cd137);
+            color: #0f172a;
+            background: linear-gradient(135deg, #f59e0b, #10b981);
             border: none;
-            border-radius: 30px;
+            border-radius: 12px;
             cursor: pointer;
-            box-shadow: 0 5px 20px rgba(76, 209, 55, 0.4);
-            transition: transform 0.1s;
+            margin-top: 10px;
         }
-        button:active {
-            transform: scale(0.95);
+        .btn:active { opacity: 0.9; transform: scale(0.98); }
+        .btn-secondary {
+            background: #334155;
+            color: #f8fafc;
+            margin-top: 10px;
         }
-        button:disabled {
-            background: #576574;
-            color: #8395a7;
-            cursor: not-allowed;
-            box-shadow: none;
-        }
-        .shop {
-            margin-top: 20px;
+
+        /* Нижняя навигация */
+        .navbar {
+            position: fixed;
+            bottom: 0; left: 0; width: 100%;
+            background: #1e293b;
+            border-top: 1px solid #334155;
             display: flex;
-            gap: 10px;
+            justify-content: space-around;
+            padding: 10px 0;
+            z-index: 100;
         }
-        .shop-btn {
-            padding: 8px 12px;
-            font-size: 12px;
-            background: #2f3640;
-            color: #f5f6fa;
-            border: 1px solid #718093;
-            border-radius: 10px;
-            cursor: pointer;
+        .nav-item {
+            background: none; border: none; color: #94a3b8;
+            font-size: 12px; display: flex; flex-direction: column;
+            align-items: center; gap: 4px; cursor: pointer;
         }
-        .shop-btn:hover {
-            background: #353b48;
-        }
-        #result {
-            margin-top: 15px;
-            font-size: 20px;
-            font-weight: bold;
-            color: #4cd137;
-            min-height: 25px;
-            text-align: center;
-        }
+        .nav-item.active { color: #f59e0b; }
+        .nav-icon { font-size: 18px; }
+
+        #resultMsg { margin-top: 10px; font-weight: bold; color: #10b981; min-height: 24px; text-align: center; }
     </style>
 </head>
 <body>
 
-    <h2>Колесо Фортуны 🎡</h2>
-    <div class="info">Доступно попыток: <span id="spinsLeft">1</span></div>
-
-    <div class="wheel-container">
-        <div class="pointer"></div>
-        <canvas id="wheel" width="300" height="300"></canvas>
+    <!-- Шапка профиля -->
+    <div class="profile-header">
+        <div class="profile-info">ID: <span id="userId">...</span></div>
+        <div class="profile-info">⭐: <span id="userStars">0</span></div>
     </div>
 
-    <button id="spinBtn" onclick="spin()">КРУТИТЬ</button>
-    <div id="result"></div>
+    <!-- ГЛАВНАЯ СТРАНИЦА (МЕНЮ) -->
+    <div id="page-home" class="page active">
+        <h2>Secret Spin 🎰</h2>
+        <div style="font-size: 13px; color: #94a3b8; margin-bottom: 10px;">Добро пожаловать в Колесо Фортуны!</div>
+        
+        <div class="menu-grid">
+            <div class="menu-card full" onclick="switchPage('wheel')">
+                <span class="menu-icon">🎡</span>
+                <span>Исполнить удачу (Колесо)</span>
+            </div>
+            <div class="menu-card" onclick="switchPage('profile')">
+                <span class="menu-icon">👤</span>
+                <span>Личный кабинет</span>
+            </div>
+            <div class="menu-card" onclick="switchPage('shop')">
+                <span class="menu-icon">🎁</span>
+                <span>Магазин Сундуков</span>
+            </div>
+            <div class="menu-card" onclick="alert('Раздел в разработке')">
+                <span class="menu-icon">🪙</span>
+                <span>Орёл и Решка</span>
+            </div>
+            <div class="menu-card" onclick="alert('Раздел в разработке')">
+                <span class="menu-icon">🎲</span>
+                <span>Бросок кубика</span>
+            </div>
+            <div class="menu-card" onclick="alert('Раздел в разработке')">
+                <span class="menu-icon">🏆</span>
+                <span>Турнир недели</span>
+            </div>
+            <div class="menu-card" onclick="alert('Раздел в разработке')">
+                <span class="menu-icon">🎟️</span>
+                <span>Промокод</span>
+            </div>
+            <div class="menu-card" onclick="alert('Раздел в разработке')">
+                <span class="menu-icon">👥</span>
+                <span>Рефералы</span>
+            </div>
+            <div class="menu-card" onclick="alert('Раздел в разработке')">
+                <span class="menu-icon">⭐</span>
+                <span>Buy VIP</span>
+            </div>
+        </div>
+    </div>
 
-    <div class="shop">
-        <button class="shop-btn" onclick="buySpins(1, 50)">1 за 50</button>
-        <button class="shop-btn" onclick="buySpins(3, 120)">3 за 120</button>
-        <button class="shop-btn" onclick="buySpins(5, 200)">5 за 200</button>
+    <!-- СТРАНИЦА КОЛЕСА ФОРТУНЫ -->
+    <div id="page-wheel" class="page">
+        <h2>Исполнить удачу 🎡</h2>
+        <div style="font-size: 12px; color: #94a3b8;">Бесплатный спин раз в 24 часа</div>
+
+        <div class="wheel-box">
+            <div class="pointer"></div>
+            <div class="preview-card" id="previewCard">
+                <div class="blur-content"></div>
+                <span class="lock-icon" id="lockIcon">🔒</span>
+            </div>
+            <canvas id="wheel" width="280" height="280"></canvas>
+        </div>
+
+        <button class="btn" id="spinBtn" onclick="startSpin()">КРУТИТЬ КОЛЕСО</button>
+        <div id="resultMsg"></div>
+        <button class="btn btn-secondary" onclick="switchPage('home')">Назад в меню</button>
+    </div>
+
+    <!-- СТРАНИЦА ЛИЧНОГО КАБИНЕТА -->
+    <div id="page-profile" class="page">
+        <h2>Личный кабинет 👤</h2>
+        <div style="background: #1e293b; padding: 15px; border-radius: 12px; width: 100%; margin-bottom: 15px;">
+            <p>Статус: <b style="color: #f59e0b;">Standard</b></p>
+            <p style="margin-top: 8px;">Баланс: <b id="profileStars">0 ⭐</b></p>
+            <p style="margin-top: 8px;">Доступно спинов: <b id="profileSpins">1</b></p>
+        </div>
+        <button class="btn btn-secondary" onclick="switchPage('home')">Назад в меню</button>
+    </div>
+
+    <!-- СТРАНИЦА МАГАЗИНА СУНДУКОВ -->
+    <div id="page-shop" class="page">
+        <h2>Магазин Сундуков 🎁</h2>
+        <div style="background: #1e293b; padding: 15px; border-radius: 12px; width: 100%; text-align: center; margin-bottom: 15px;">
+            <p>Здесь вы можете покупать попытки и сундуки за звезды.</p>
+            <button class="btn" onclick="alert('Покупка пакета попыток!')" style="margin-top: 15px;">Купить 3 спина (120⭐)</button>
+        </div>
+        <button class="btn btn-secondary" onclick="switchPage('home')">Назад в меню</button>
+    </div>
+
+    <!-- НИЖНЯЯ ПАНЕЛЬ НАВИГАЦИИ -->
+    <div class="navbar">
+        <button class="nav-item active" onclick="switchPage('home')" id="nav-home">
+            <span class="nav-icon">🏠</span> Меню
+        </button>
+        <button class="nav-item" onclick="switchPage('wheel')" id="nav-wheel">
+            <span class="nav-icon">🎡</span> Колесо
+        </button>
+        <button class="nav-item" onclick="switchPage('profile')" id="nav-profile">
+            <span class="nav-icon">👤</span> Профиль
+        </button>
+        <button class="nav-item" onclick="switchPage('shop')" id="nav-shop">
+            <span class="nav-icon">🎁</span> Магазин
+        </button>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        let spins = 1; // Условный остаток попыток
-        const canvas = document.getElementById('wheel');
-        const ctx = canvas.getContext('2d');
-        const sectors = ["100 $", "Попробуй еще", "500 $", "Джекпот!", "0 $", "50 $"];
-        const colors = ["#e84118", "#00a8ff", "#9c88ff", "#fbc531", "#487eb0", "#4cd137"];
-        
-        let currentAngle = 0;
-        let isSpinning = false;
-
-        function updateUI() {
-            document.getElementById('spinsLeft').innerText = spins;
-            document.getElementById('spinBtn').disabled = spins <= 0 || isSpinning;
+        // Инициализация данных пользователя из Telegram
+        const user = tg.initDataUnsafe?.user;
+        if (user) {
+            document.getElementById('userId').innerText = user.id;
+        } else {
+            document.getElementById('userId').innerText = "486646287"; // Заглушка для теста
         }
 
-        function drawWheel() {
-            const numSectors = sectors.length;
-            const arc = (2 * Math.PI) / numSectors;
-
-            for (let i = 0; i < numSectors; i++) {
-                const angle = currentAngle + i * arc;
-                ctx.beginPath();
-                ctx.fillStyle = colors[i % colors.length];
-                ctx.moveTo(150, 150);
-                ctx.arc(150, 150, 150, angle, angle + arc);
-                ctx.lineTo(150, 150);
-                ctx.fill();
-
-                ctx.save();
-                ctx.translate(150, 150);
-                ctx.rotate(angle + arc / 2);
-                ctx.textAlign = "right";
-                ctx.fillStyle = "#ffffff";
-                ctx.font = "bold 15px Arial";
-                ctx.fillText(sectors[i], 130, 5);
-                ctx.restore();
+        // Переключение страниц
+        function switchPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            
+            document.getElementById('page-' + pageId).classList.add('active');
+            if(document.getElementById('nav-' + pageId)) {
+                document.getElementById('nav-' + pageId).classList.add('active');
             }
         }
 
-        drawWheel();
-        updateUI();
+        // Логика Колеса Фортуны
+        const sectors = ["Эксклюзив 1", "Пусто", "VIP Контент", "Джекпот!", "Скидка", "Эксклюзив 2"];
+        const colors = ["#ef4444", "#3b82f6", "#8b5cf6", "#f59e0b", "#64748b", "#10b981"];
+        const canvas = document.getElementById('wheel');
+        const ctx = canvas.getContext('2d');
+        let currentAngle = 0;
+        let isSpinning = false;
 
-        function spin() {
-            if (isSpinning || spins <= 0) return;
+        function drawWheel() {
+            const arc = (2 * Math.PI) / sectors.length;
+            for (let i = 0; i < sectors.length; i++) {
+                const angle = currentAngle + i * arc;
+                ctx.beginPath();
+                ctx.fillStyle = colors[i % colors.length];
+                ctx.moveTo(140, 140);
+                ctx.arc(140, 140, 140, angle, angle + arc);
+                ctx.lineTo(140, 140);
+                ctx.fill();
+
+                ctx.save();
+                ctx.translate(140, 140);
+                ctx.rotate(angle + arc / 2);
+                ctx.textAlign = "right";
+                ctx.fillStyle = "#ffffff";
+                ctx.font = "bold 12px Arial";
+                ctx.fillText(sectors[i], 120, 4);
+                ctx.restore();
+            }
+        }
+        drawWheel();
+
+        function startSpin() {
+            if (isSpinning) return;
             isSpinning = true;
-            spins--;
-            updateUI();
-            document.getElementById('result').innerText = "";
+            document.getElementById('spinBtn').disabled = true;
+            document.getElementById('resultMsg').innerText = "Вращаем...";
+            document.getElementById('previewCard').classList.remove('unlocked');
+            document.getElementById('lockIcon').style.display = 'block';
 
             const winningIndex = Math.floor(Math.random() * sectors.length);
-            const numSectors = sectors.length;
-            const sectorArc = (2 * Math.PI) / numSectors;
-            
-            const targetSectorAngle = (2 * Math.PI) - (winningIndex * sectorArc) - (sectorArc / 2);
-            const extraRounds = 5 * 2 * Math.PI;
-            const totalTargetAngle = currentAngle + extraRounds + (targetSectorAngle - (currentAngle % (2 * Math.PI)));
+            const sectorArc = (2 * Math.PI) / sectors.length;
+            const targetAngle = (2 * Math.PI) - (winningIndex * sectorArc) - (sectorArc / 2);
+            const totalRotation = currentAngle + (5 * 2 * Math.PI) + (targetAngle - (currentAngle % (2 * Math.PI)));
 
             const duration = 4000;
-            const start = performance.now();
+            const startTime = performance.now();
 
             function animate(time) {
-                let elapsed = time - start;
+                let elapsed = time - startTime;
                 let progress = Math.min(elapsed / duration, 1);
                 let easeOut = 1 - Math.pow(1 - progress, 4);
-                
-                currentAngle = easeOut * totalTargetAngle;
-                ctx.clearRect(0, 0, 300, 300);
+
+                currentAngle = easeOut * totalRotation;
+                ctx.clearRect(0, 0, 280, 280);
                 drawWheel();
 
                 if (progress < 1) {
                     requestAnimationFrame(animate);
                 } else {
                     isSpinning = false;
+                    document.getElementById('spinBtn').disabled = false;
                     const prize = sectors[winningIndex];
-                    document.getElementById('result').innerText = "Вы выиграли: " + prize + "!";
-                    updateUI();
+                    
+                    document.getElementById('previewCard').classList.add('unlocked');
+                    document.getElementById('lockIcon').style.display = 'none';
+                    document.getElementById('resultMsg').innerText = "Выиграно: " + prize + "!";
 
-                    setTimeout(() => {
-                        tg.sendData(JSON.stringify({
-                            action: "win",
-                            prize: prize,
-                            user_id: tg.initDataUnsafe?.user?.id
-                        }));
-                    }, 1500);
+                    // Отправка данных боту
+                    tg.sendData(JSON.stringify({
+                        action: "win",
+                        prize: prize
+                    }));
                 }
             }
-
             requestAnimationFrame(animate);
-        }
-
-        function buySpins(amount, cost) {
-            alert(`Покупка ${amount} попыток за ${cost} в разработке! Скоро подключим оплату.`);
         }
     </script>
 </body>

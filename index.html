@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -184,27 +183,27 @@
                 <span class="menu-icon">🎁</span>
                 <span id="t-chestShop">Chest Shop</span>
             </div>
-            <div class="menu-card" onclick="alert('Coming soon!')">
+            <div class="menu-card" onclick="showPopup('Coin Flip', 'Coming soon!')">
                 <span class="menu-icon">🪙</span>
                 <span id="t-coinFlip">Coin Flip (10⭐)</span>
             </div>
-            <div class="menu-card" onclick="alert('Coming soon!')">
+            <div class="menu-card" onclick="showPopup('Dice Roll', 'Coming soon!')">
                 <span class="menu-icon">🎲</span>
                 <span id="t-diceRoll">Dice Roll (10⭐)</span>
             </div>
-            <div class="menu-card" onclick="alert('Coming soon!')">
+            <div class="menu-card" onclick="showPopup('Tournament', 'Coming soon!')">
                 <span class="menu-icon">🏆</span>
                 <span id="t-weeklyTourney">Weekly Tournament</span>
             </div>
-            <div class="menu-card" onclick="alert('Coming soon!')">
+            <div class="menu-card" onclick="showPopup('Promo Code', 'Coming soon!')">
                 <span class="menu-icon">🎟️</span>
                 <span id="t-promoCode">Promo Code</span>
             </div>
-            <div class="menu-card" onclick="alert('Coming soon!')">
+            <div class="menu-card" onclick="showPopup('Referral System', 'Coming soon!')">
                 <span class="menu-icon">👥</span>
                 <span id="t-refSystem">Referral System</span>
             </div>
-            <div class="menu-card" onclick="alert('Coming soon!')">
+            <div class="menu-card" onclick="showPopup('VIP', 'Coming soon!')">
                 <span class="menu-icon">⭐</span>
                 <span id="t-buyVip">Buy VIP</span>
             </div>
@@ -273,6 +272,7 @@
 
     <script>
         const tg = window.Telegram.WebApp;
+        tg.ready();
         tg.expand();
 
         const user = tg.initDataUnsafe?.user;
@@ -294,4 +294,37 @@
                 buyVip: "Buy VIP",
                 language: "Language: English 🇬🇧",
                 wheelTitle: "Try Your Luck 🎡",
-                wheelSub: "Free spin
+                wheelSub: "Free spin once every 24 hours",
+                spinBtn: "SPIN WHEEL",
+                backBtn: "Back to Menu",
+                profileTitle: "Personal Account 👤",
+                statusLabel: "Status",
+                balanceLabel: "Balance",
+                spinsLabel: "Spins available",
+                shopTitle: "Chest Shop 🎁",
+                shopDesc: "Buy additional spins and chests here.",
+                buyBtn: "Buy 3 Spins (120⭐)",
+                navMenu: "Menu",
+                navWheel: "Wheel",
+                navProfile: "Profile",
+                navShop: "Shop",
+                spinning: "Spinning...",
+                won: "Won: "
+            },
+            ru: {
+                welcome: "Добро пожаловать в Колесо Фортуны!",
+                tryLuck: "Испытать удачу (Колесо)",
+                profile: "Личный кабинет",
+                chestShop: "Магазин Сундуков",
+                coinFlip: "Орёл и Решка (10⭐)",
+                diceRoll: "Бросок кубика (10⭐)",
+                weeklyTourney: "Турнир недели",
+                promoCode: "Промокод",
+                refSystem: "Реферальная система",
+                buyVip: "Buy VIP",
+                language: "Язык: Русский 🇷🇺",
+                wheelTitle: "Испытать удачу 🎡",
+                wheelSub: "Бесплатный спин раз в 24 часа",
+                spinBtn: "КРУТИТЬ КОЛЕСО",
+                backBtn: "Назад в меню",
+                profileTitle: "

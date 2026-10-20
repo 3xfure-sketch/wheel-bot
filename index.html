@@ -114,6 +114,8 @@
             background: linear-gradient(45deg, #ff007f, #7f00ff);
             filter: blur(8px) brightness(0.6);
             transition: filter 0.5s ease;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 11px; font-weight: bold; text-align: center; padding: 5px;
         }
         .preview-card.unlocked .blur-content { filter: blur(0px) brightness(1); }
         .lock-icon { position: absolute; font-size: 18px; z-index: 6; }
@@ -217,12 +219,12 @@
     <!-- WHEEL PAGE -->
     <div id="page-wheel" class="page">
         <h2 id="t-wheelTitle">Try Your Luck 🎡</h2>
-        <div class="sub-title" id="t-wheelSub">Free spin once every 24 hours</div>
+        <div class="sub-title" id="t-wheelSub">Unique content without repetitions</div>
 
         <div class="wheel-box">
             <div class="pointer"></div>
             <div class="preview-card" id="previewCard">
-                <div class="blur-content"></div>
+                <div class="blur-content" id="centerPreviewText">???</div>
                 <span class="lock-icon" id="lockIcon">🔒</span>
             </div>
             <canvas id="wheel" width="280" height="280"></canvas>
@@ -248,7 +250,7 @@
     <div id="page-shop" class="page">
         <h2 id="t-shopTitle">Chest Shop 🎁</h2>
         <div style="background: #1e293b; padding: 15px; border-radius: 12px; width: 100%; text-align: center; margin-bottom: 15px;">
-            <p id="t-shopDesc">Buy additional spins and chests here.</p>
+            <p id="t-shopDesc">Buy additional spins with Telegram Stars.</p>
             <button class="btn" onclick="buySpins(3, 120)" style="margin-top: 15px;" id="t-buyBtn">Buy 3 Spins (120⭐)</button>
         </div>
         <button class="btn btn-secondary" onclick="switchPage('home')" id="t-backBtn3">Back to Menu</button>
@@ -294,7 +296,7 @@
                 buyVip: "Buy VIP",
                 language: "Language: English 🇬🇧",
                 wheelTitle: "Try Your Luck 🎡",
-                wheelSub: "Free spin once every 24 hours",
+                wheelSub: "Unique content without repetitions",
                 spinBtn: "SPIN WHEEL",
                 backBtn: "Back to Menu",
                 profileTitle: "Personal Account 👤",
@@ -302,14 +304,15 @@
                 balanceLabel: "Balance",
                 spinsLabel: "Spins available",
                 shopTitle: "Chest Shop 🎁",
-                shopDesc: "Buy additional spins and chests here.",
+                shopDesc: "Buy additional spins with Telegram Stars.",
                 buyBtn: "Buy 3 Spins (120⭐)",
                 navMenu: "Menu",
                 navWheel: "Wheel",
                 navProfile: "Profile",
                 navShop: "Shop",
                 spinning: "Spinning...",
-                won: "Won: "
+                won: "Won: ",
+                allWon: "All content unlocked!"
             },
             ru: {
                 welcome: "Добро пожаловать в Колесо Фортуны!",
@@ -324,7 +327,7 @@
                 buyVip: "Buy VIP",
                 language: "Язык: Русский 🇷🇺",
                 wheelTitle: "Испытать удачу 🎡",
-                wheelSub: "Бесплатный спин раз в 24 часа",
+                wheelSub: "Уникальный контент без повторений",
                 spinBtn: "КРУТИТЬ КОЛЕСО",
                 backBtn: "Назад в меню",
                 profileTitle: "Личный кабинет 👤",
@@ -332,14 +335,15 @@
                 balanceLabel: "Баланс",
                 spinsLabel: "Доступно спинов",
                 shopTitle: "Магазин Сундуков 🎁",
-                shopDesc: "Здесь вы можете покупать попытки и сундуки за звезды.",
+                shopDesc: "Покупайте дополнительные попытки за Telegram Stars.",
                 buyBtn: "Купить 3 спина (120⭐)",
                 navMenu: "Меню",
                 navWheel: "Колесо",
                 navProfile: "Профиль",
                 navShop: "Магазин",
                 spinning: "Вращаем...",
-                won: "Выиграно: "
+                won: "Выиграно: ",
+                allWon: "Весь контент открыт!"
             }
         };
 
@@ -399,16 +403,27 @@
             }
         }
 
-        const sectors = ["Контент №1", "Пусто", "VIP Контент", "Джекпот!", "Скидка 50%", "Эксклюзив"];
-        const colors = ["#ef4444", "#3b82f6", "#8b5cf6", "#f59e0b", "#64748b", "#10b981"];
+        // Загруженный в боте контент (список уникальных элементов, которые никогда не повторяются)
+        let availableSectors = ["Контент №1", "Секретное фото", "VIP Документ", "Эксклюзивный файл", "Бонусный архив", "Супер Приз"];
+        let colors = ["#ef4444", "#3b82f6", "#8b5cf6", "#f59e0b", "#64748b", "#10b981"];
+        
         const canvas = document.getElementById('wheel');
         const ctx = canvas.getContext('2d');
         let currentAngle = 0;
         let isSpinning = false;
 
         function drawWheel() {
-            const arc = (2 * Math.PI) / sectors.length;
-            for (let i = 0; i < sectors.length; i++) {
+            ctx.clearRect(0, 0, 280, 280);
+            if (availableSectors.length === 0) {
+                ctx.fillStyle = "#94a3b8";
+                ctx.font = "bold 14px Arial";
+                ctx.textAlign = "center";
+                ctx.fillText(i18n[currentLang].allWon, 140, 140);
+                return;
+            }
+
+            const arc = (2 * Math.PI) / availableSectors.length;
+            for (let i = 0; i < availableSectors.length; i++) {
                 const angle = currentAngle + i * arc;
                 ctx.beginPath();
                 ctx.fillStyle = colors[i % colors.length];
@@ -422,8 +437,8 @@
                 ctx.rotate(angle + arc / 2);
                 ctx.textAlign = "right";
                 ctx.fillStyle = "#ffffff";
-                ctx.font = "bold 12px Arial";
-                ctx.fillText(sectors[i], 120, 4);
+                ctx.font = "bold 11px Arial";
+                ctx.fillText(availableSectors[i], 120, 4);
                 ctx.restore();
             }
         }
@@ -431,15 +446,16 @@
         updateLanguage();
 
         function startSpin() {
-            if (isSpinning) return;
+            if (isSpinning || availableSectors.length === 0) return;
             isSpinning = true;
             document.getElementById('spinBtn').disabled = true;
             document.getElementById('resultMsg').innerText = i18n[currentLang].spinning;
             document.getElementById('previewCard').classList.remove('unlocked');
             document.getElementById('lockIcon').style.display = 'block';
+            document.getElementById('centerPreviewText').innerText = "???";
 
-            const winningIndex = Math.floor(Math.random() * sectors.length);
-            const sectorArc = (2 * Math.PI) / sectors.length;
+            const winningIndex = Math.floor(Math.random() * availableSectors.length);
+            const sectorArc = (2 * Math.PI) / availableSectors.length;
             const targetAngle = (2 * Math.PI) - (winningIndex * sectorArc) - (sectorArc / 2);
             const totalRotation = currentAngle + (5 * 2 * Math.PI) + (targetAngle - (currentAngle % (2 * Math.PI)));
 
@@ -452,24 +468,32 @@
                 let easeOut = 1 - Math.pow(1 - progress, 4);
 
                 currentAngle = easeOut * totalRotation;
-                ctx.clearRect(0, 0, 280, 280);
                 drawWheel();
 
                 if (progress < 1) {
                     requestAnimationFrame(animate);
                 } else {
                     isSpinning = false;
-                    document.getElementById('spinBtn').disabled = false;
-                    const prize = sectors[winningIndex];
+                    const wonPrize = availableSectors[winningIndex];
                     
+                    // Удаляем выигранный элемент из доступных, чтобы он НИКОГДА не повторялся
+                    availableSectors.splice(winningIndex, 1);
+                    drawWheel();
+
+                    document.getElementById('centerPreviewText').innerText = wonPrize;
                     document.getElementById('previewCard').classList.add('unlocked');
                     document.getElementById('lockIcon').style.display = 'none';
-                    document.getElementById('resultMsg').innerText = i18n[currentLang].won + prize;
+                    document.getElementById('resultMsg').innerText = i18n[currentLang].won + wonPrize;
 
+                    if (availableSectors.length > 0) {
+                        document.getElementById('spinBtn').disabled = false;
+                    }
+
+                    // Отправляем данные боту для сохранения в БД
                     try {
                         tg.sendData(JSON.stringify({
                             action: "spin_win",
-                            prize: prize
+                            prize: wonPrize
                         }));
                     } catch(e) {
                         console.log("sendData error:", e);
@@ -480,7 +504,15 @@
         }
 
         function buySpins(count, price) {
-            showPopup("Purchase", `Ordering ${count} spins for ${price}⭐ Stars`);
+            try {
+                tg.sendData(JSON.stringify({
+                    action: "buy_stars",
+                    count: count,
+                    price: price
+                }));
+            } catch(e) {
+                showPopup("Shop", `Order ${count} spins for ${price}⭐`);
+            }
         }
     </script>
 </body>

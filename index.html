@@ -19,14 +19,19 @@
             user-select: none;
         }
         h2 {
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             color: #fbc531;
             text-shadow: 0 0 10px rgba(251, 197, 49, 0.4);
         }
+        .info {
+            font-size: 14px;
+            color: #b2bec3;
+            margin-bottom: 15px;
+        }
         .wheel-container {
             position: relative;
-            width: 320px;
-            height: 320px;
+            width: 300px;
+            height: 300px;
         }
         canvas {
             width: 100%;
@@ -49,8 +54,8 @@
             filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
         }
         button {
-            margin-top: 30px;
-            padding: 16px 40px;
+            margin-top: 20px;
+            padding: 14px 35px;
             font-size: 18px;
             font-weight: bold;
             color: #121212;
@@ -59,17 +64,40 @@
             border-radius: 30px;
             cursor: pointer;
             box-shadow: 0 5px 20px rgba(76, 209, 55, 0.4);
-            transition: transform 0.1s, box-shadow 0.2s;
+            transition: transform 0.1s;
         }
         button:active {
             transform: scale(0.95);
         }
-        #result {
+        button:disabled {
+            background: #576574;
+            color: #8395a7;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        .shop {
             margin-top: 20px;
-            font-size: 22px;
+            display: flex;
+            gap: 10px;
+        }
+        .shop-btn {
+            padding: 8px 12px;
+            font-size: 12px;
+            background: #2f3640;
+            color: #f5f6fa;
+            border: 1px solid #718093;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .shop-btn:hover {
+            background: #353b48;
+        }
+        #result {
+            margin-top: 15px;
+            font-size: 20px;
             font-weight: bold;
             color: #4cd137;
-            min-height: 30px;
+            min-height: 25px;
             text-align: center;
         }
     </style>
@@ -77,19 +105,27 @@
 <body>
 
     <h2>Колесо Фортуны 🎡</h2>
+    <div class="info">Доступно попыток: <span id="spinsLeft">1</span></div>
 
     <div class="wheel-container">
         <div class="pointer"></div>
-        <canvas id="wheel" width="320" height="320"></canvas>
+        <canvas id="wheel" width="300" height="300"></canvas>
     </div>
 
-    <button id="spinBtn" onclick="spin()">КРУТИТЬ КОЛЕСО!</button>
+    <button id="spinBtn" onclick="spin()">КРУТИТЬ</button>
     <div id="result"></div>
+
+    <div class="shop">
+        <button class="shop-btn" onclick="buySpins(1, 50)">1 за 50</button>
+        <button class="shop-btn" onclick="buySpins(3, 120)">3 за 120</button>
+        <button class="shop-btn" onclick="buySpins(5, 200)">5 за 200</button>
+    </div>
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.expand(); // Раскрываем окно на весь экран
+        tg.expand();
 
+        let spins = 1; // Условный остаток попыток
         const canvas = document.getElementById('wheel');
         const ctx = canvas.getContext('2d');
         const sectors = ["100 $", "Попробуй еще", "500 $", "Джекпот!", "0 $", "50 $"];
@@ -97,6 +133,11 @@
         
         let currentAngle = 0;
         let isSpinning = false;
+
+        function updateUI() {
+            document.getElementById('spinsLeft').innerText = spins;
+            document.getElementById('spinBtn').disabled = spins <= 0 || isSpinning;
+        }
 
         function drawWheel() {
             const numSectors = sectors.length;
@@ -106,50 +147,50 @@
                 const angle = currentAngle + i * arc;
                 ctx.beginPath();
                 ctx.fillStyle = colors[i % colors.length];
-                ctx.moveTo(160, 160);
-                ctx.arc(160, 160, 160, angle, angle + arc);
-                ctx.lineTo(160, 160);
+                ctx.moveTo(150, 150);
+                ctx.arc(150, 150, 150, angle, angle + arc);
+                ctx.lineTo(150, 150);
                 ctx.fill();
 
-                // Отрисовка текста
                 ctx.save();
-                ctx.translate(160, 160);
+                ctx.translate(150, 150);
                 ctx.rotate(angle + arc / 2);
                 ctx.textAlign = "right";
                 ctx.fillStyle = "#ffffff";
-                ctx.font = "bold 16px Arial";
-                ctx.fillText(sectors[i], 140, 6);
+                ctx.font = "bold 15px Arial";
+                ctx.fillText(sectors[i], 130, 5);
                 ctx.restore();
             }
         }
 
         drawWheel();
+        updateUI();
 
         function spin() {
-            if (isSpinning) return;
+            if (isSpinning || spins <= 0) return;
             isSpinning = true;
-            document.getElementById('spinBtn').style.opacity = '0.5';
+            spins--;
+            updateUI();
             document.getElementById('result').innerText = "";
 
             const winningIndex = Math.floor(Math.random() * sectors.length);
             const numSectors = sectors.length;
             const sectorArc = (2 * Math.PI) / numSectors;
             
-            // Расчет угла остановки
             const targetSectorAngle = (2 * Math.PI) - (winningIndex * sectorArc) - (sectorArc / 2);
-            const extraRounds = 5 * 2 * Math.PI; // 5 полных оборотов
+            const extraRounds = 5 * 2 * Math.PI;
             const totalTargetAngle = currentAngle + extraRounds + (targetSectorAngle - (currentAngle % (2 * Math.PI)));
 
-            const duration = 4500;
+            const duration = 4000;
             const start = performance.now();
 
             function animate(time) {
                 let elapsed = time - start;
                 let progress = Math.min(elapsed / duration, 1);
-                let easeOut = 1 - Math.pow(1 - progress, 4); // Плавное замедление
+                let easeOut = 1 - Math.pow(1 - progress, 4);
                 
                 currentAngle = easeOut * totalTargetAngle;
-                ctx.clearRect(0, 0, 320, 320);
+                ctx.clearRect(0, 0, 300, 300);
                 drawWheel();
 
                 if (progress < 1) {
@@ -158,10 +199,11 @@
                     isSpinning = false;
                     const prize = sectors[winningIndex];
                     document.getElementById('result').innerText = "Вы выиграли: " + prize + "!";
-                    
-                    // Отправляем результат обратно в бота через 1.5 секунды
+                    updateUI();
+
                     setTimeout(() => {
                         tg.sendData(JSON.stringify({
+                            action: "win",
                             prize: prize,
                             user_id: tg.initDataUnsafe?.user?.id
                         }));
@@ -170,6 +212,10 @@
             }
 
             requestAnimationFrame(animate);
+        }
+
+        function buySpins(amount, cost) {
+            alert(`Покупка ${amount} попыток за ${cost} в разработке! Скоро подключим оплату.`);
         }
     </script>
 </body>

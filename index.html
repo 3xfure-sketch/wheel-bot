@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Wheel of Fortune TMA</title>
+    <title>Content Wheel TMA</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
@@ -55,31 +55,32 @@
         <div class="balance-badge">⭐ <span id="balance">0</span> spins</div>
     </div>
 
-    <h3>🎁 Content Roulette (CS2 Style)</h3>
+    <h3>🎁 Content Wheel</h3>
 
-    <div class="roulette-wrapper">
+    <div class="roulette-wrapper" id="roulette-wrapper">
         <div class="pointer"></div>
         <div class="tape" id="tape"></div>
     </div>
 
-    <button class="btn-spin" id="spin-btn" onclick="startSpin()">🚀 SPIN ROULETTE</button>
+    <button class="btn-spin" id="spin-btn" onclick="startSpin()">🚀 SPIN WHEEL</button>
 
     <div class="prize-modal" id="prize-modal">
         <div class="prize-box">
             <h2 style="color: #ffd700; margin-top:0;">🎉 YOU WON!</h2>
             <p id="prize-title" style="font-size: 16px; margin: 15px 0;"></p>
+            <p style="font-size: 12px; color: #aaa;">Prize delivered to your Telegram chat!</p>
             <button class="btn-spin" style="background: #2481cc;" onclick="closeModal()">CLAIM</button>
         </div>
     </div>
 
     <script>
-        // Ссылка вашего статического туннеля ngrok уже настроена
         const BACKEND_URL = "https://stiffly-degrading-dimly.ngrok-free.dev";
 
         const tg = window.Telegram.WebApp;
         tg.expand();
         let dbItems = [];
         let isSpinning = false;
+        const TAPE_ITEMS_COUNT = 70;
 
         fetch(`${BACKEND_URL}/api/profile`, { 
             headers: { 'Authorization': tg.initData } 
@@ -88,18 +89,23 @@
         .then(d => {
             document.getElementById('user-id').innerText = d.user_id;
             document.getElementById('balance').innerText = d.balance;
-        }).catch(err => console.error("Profile load error:", err));
+        }).catch(err => console.error("Profile error:", err));
 
         fetch(`${BACKEND_URL}/api/content_items`)
             .then(r => r.json())
-            .then(d => { dbItems = d.items; buildTape(); })
-            .catch(err => console.error("Content load error:", err));
+            .then(d => { dbItems = d.items; buildTape(null); })
+            .catch(err => console.error("Content error:", err));
 
-        function buildTape() {
+        function buildTape(winningItemId) {
             const tape = document.getElementById('tape');
             tape.innerHTML = '';
-            for (let i = 0; i < 60; i++) {
-                const item = dbItems[i % dbItems.length];
+            for (let i = 0; i < TAPE_ITEMS_COUNT; i++) {
+                let item;
+                if (i === 50 && winningItemId) {
+                    item = dbItems.find(it => it.id === winningItemId) || dbItems[0];
+                } else {
+                    item = dbItems[i % dbItems.length];
+                }
                 const div = document.createElement('div');
                 div.className = 'case-item';
                 div.style.borderColor = item.color;
@@ -109,7 +115,8 @@
         }
 
         function startSpin() {
-            if (isSpinning) return;
+            if (isSpinning || dbItems.length === 0) return;
+
             fetch(`${BACKEND_URL}/api/spin`, { 
                 method: 'POST', 
                 headers: { 'Authorization': tg.initData } 
@@ -117,20 +124,32 @@
             .then(r => r.json())
             .then(data => {
                 if (!data.success) { tg.showAlert(data.message); return; }
+
                 isSpinning = true;
                 document.getElementById('spin-btn').disabled = true;
+                buildTape(data.prize_id);
 
                 const tape = document.getElementById('tape');
+                tape.style.transition = 'none';
+                tape.style.transform = 'translateX(0px)';
+
                 const itemWidth = 108;
-                const targetX = (45 * itemWidth) - (document.querySelector('.roulette-wrapper').offsetWidth / 2) + (itemWidth / 2) + (Math.random() * 60 - 30);
+                const wrapperWidth = document.getElementById('roulette-wrapper').offsetWidth;
+                const targetX = (50 * itemWidth) - (wrapperWidth / 2) + (itemWidth / 2) + (Math.random() * 10 - 5);
 
-                tape.style.transition = 'transform 5s cubic-bezier(0.15, 0.9, 0.2, 1)';
-                tape.style.transform = `translateX(-${targetX}px)`;
+                setTimeout(() => {
+                    tape.style.transition = 'transform 5s cubic-bezier(0.08, 0.52, 0.15, 1)';
+                    tape.style.transform = `translateX(-${targetX}px)`;
 
-                if (tg.HapticFeedback) {
-                    let ticks = 0;
-                    const interval = setInterval(() => { tg.HapticFeedback.impactOccurred('light'); ticks++; if(ticks > 25) clearInterval(interval); }, 150);
-                }
+                    if (tg.HapticFeedback) {
+                        let ticks = 0;
+                        const interval = setInterval(() => { 
+                            tg.HapticFeedback.impactOccurred('light'); 
+                            ticks++; 
+                            if(ticks > 30) clearInterval(interval); 
+                        }, 130);
+                    }
+                }, 50);
 
                 setTimeout(() => {
                     isSpinning = false;
@@ -139,16 +158,11 @@
                     document.getElementById('prize-title').innerText = data.title;
                     document.getElementById('prize-modal').style.display = 'flex';
                     if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-
-                    setTimeout(() => {
-                        tape.style.transition = 'none';
-                        tape.style.transform = 'translateX(0px)';
-                    }, 1000);
-                }, 5200);
+                }, 5250);
             })
             .catch(err => {
                 isSpinning = false;
-                document.getElementById('spin-btn').disabled = false;
+                document.getElementById('spin-btn'].disabled = false;
                 tg.showAlert("Server connection error!");
             });
         }

@@ -1,534 +1,160 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secret Spin Mini App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Wheel of Fortune TMA</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: #0f172a;
-            color: #f8fafc;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            padding-bottom: 75px;
-            user-select: none;
+            background-color: #12141c; color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0; padding: 12px; text-align: center; overflow-x: hidden;
         }
-        
-        .profile-header {
-            width: 100%;
-            background: #1e293b;
-            padding: 14px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #334155;
-            font-size: 14px;
+        .header {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #1e2230; padding: 10px 15px; border-radius: 12px; margin-bottom: 15px; font-size: 14px;
         }
-        .profile-info span { color: #f59e0b; font-weight: bold; }
-
-        .page {
-            display: none;
-            width: 100%;
-            max-width: 400px;
-            padding: 20px;
-            flex-direction: column;
-            align-items: center;
-        }
-        .page.active { display: flex; }
-
-        h2 { margin-bottom: 6px; color: #f59e0b; text-align: center; font-size: 22px; }
-        .sub-title { font-size: 13px; color: #94a3b8; margin-bottom: 12px; text-align: center; }
-
-        .menu-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            width: 100%;
-            margin-top: 10px;
-        }
-        .menu-card {
-            background: #1e293b;
-            border: 1px solid #334155;
-            padding: 14px 10px;
-            border-radius: 12px;
-            text-align: center;
-            cursor: pointer;
-            transition: 0.15s;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            font-size: 13px;
-            font-weight: 600;
-        }
-        .menu-card:active { transform: scale(0.96); background: #334155; }
-        .menu-card.full { grid-column: span 2; }
-        .menu-icon { font-size: 22px; }
-
-        .wheel-box {
-            position: relative;
-            width: 280px;
-            height: 280px;
-            margin: 15px 0;
-        }
-        canvas {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            border: 5px solid #f59e0b;
-            box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+        .balance-badge { background: #2b3145; padding: 6px 12px; border-radius: 20px; font-weight: bold; color: #ffd700; }
+        .roulette-wrapper {
+            position: relative; width: 100%; height: 140px; background: #151824;
+            border: 2px solid #2b3145; border-radius: 14px; overflow: hidden; margin: 15px 0;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
         }
         .pointer {
-            position: absolute;
-            top: -10px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 14px solid transparent;
-            border-right: 14px solid transparent;
-            border-top: 24px solid #ef4444;
-            z-index: 10;
+            position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+            width: 4px; height: 100%; background: #ff4757; z-index: 10; box-shadow: 0 0 10px #ff4757;
         }
-        .preview-card {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 85px; height: 85px;
-            border-radius: 50%;
-            background: #1e293b;
-            border: 3px solid #f59e0b;
-            display: flex; align-items: center; justify-content: center;
-            z-index: 5;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
-            overflow: hidden;
+        .pointer::before {
+            content: ''; position: absolute; top: 0; left: -6px;
+            border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 10px solid #ff4757;
         }
-        .blur-content {
-            width: 100%; height: 100%;
-            background: linear-gradient(45deg, #ff007f, #7f00ff);
-            filter: blur(8px) brightness(0.6);
-            transition: filter 0.5s ease;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 10px; font-weight: bold; text-align: center; padding: 4px;
-            color: white;
+        .tape { display: flex; position: absolute; left: 0; top: 10px; height: 120px; will-change: transform; }
+        .case-item {
+            width: 100px; height: 110px; background: #1e2230; margin: 0 4px; border-radius: 8px;
+            flex-shrink: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            border-bottom: 4px solid #4b69ff; box-sizing: border-box; padding: 5px;
         }
-        .preview-card.unlocked .blur-content { filter: blur(0px) brightness(1); }
-        .lock-icon { position: absolute; font-size: 18px; z-index: 6; }
-
-        .btn {
-            width: 100%;
-            padding: 12px;
-            font-size: 16px;
-            font-weight: bold;
-            color: #0f172a;
-            background: linear-gradient(135deg, #f59e0b, #10b981);
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            margin-top: 10px;
+        .case-item .item-title { font-size: 11px; font-weight: 600; color: #ddd; max-width: 90px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .btn-spin {
+            background: linear-gradient(135deg, #ff4757, #ff6b81); color: white; border: none;
+            width: 100%; padding: 16px; font-size: 18px; font-weight: bold; border-radius: 12px; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255, 71, 87, 0.4);
         }
-        .btn:active { opacity: 0.9; transform: scale(0.98); }
-        .btn-secondary {
-            background: #334155;
-            color: #f8fafc;
-            margin-top: 10px;
+        .btn-spin:disabled { opacity: 0.5; cursor: not-allowed; }
+        .prize-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 100; flex-direction: column; justify-content: center; align-items: center; padding: 20px;
         }
-
-        .navbar {
-            position: fixed;
-            bottom: 0; left: 0; width: 100%;
-            background: #1e293b;
-            border-top: 1px solid #334155;
-            display: flex;
-            justify-content: space-around;
-            padding: 10px 0;
-            z-index: 100;
-        }
-        .nav-item {
-            background: none; border: none; color: #94a3b8;
-            font-size: 12px; display: flex; flex-direction: column;
-            align-items: center; gap: 4px; cursor: pointer;
-        }
-        .nav-item.active { color: #f59e0b; }
-        .nav-icon { font-size: 18px; }
-
-        #resultMsg { margin-top: 10px; font-weight: bold; color: #10b981; min-height: 24px; text-align: center; }
+        .prize-box { background: #1e2230; padding: 25px; border-radius: 16px; border: 2px solid #ffd700; text-align: center; max-width: 300px; }
     </style>
 </head>
 <body>
-
-    <div class="profile-header">
-        <div class="profile-info">ID: <span id="userId">...</span></div>
-        <div class="profile-info">⭐: <span id="userStars">0</span></div>
+    <div class="header">
+        <div>👤 ID: <span id="user-id">...</span></div>
+        <div class="balance-badge">⭐ <span id="balance">0</span> спинов</div>
     </div>
 
-    <!-- MAIN MENU PAGE -->
-    <div id="page-home" class="page active">
-        <h2>Secret Spin 🎰</h2>
-        <div class="sub-title" id="t-welcome">Welcome to the Wheel of Fortune!</div>
-        
-        <div class="menu-grid">
-            <div class="menu-card full" onclick="switchPage('wheel')">
-                <span class="menu-icon">🎡</span>
-                <span id="t-tryLuck">Try Your Luck (Wheel)</span>
-            </div>
-            <div class="menu-card" onclick="switchPage('profile')">
-                <span class="menu-icon">👤</span>
-                <span id="t-profile">Personal Account</span>
-            </div>
-            <div class="menu-card" onclick="switchPage('shop')">
-                <span class="menu-icon">🎁</span>
-                <span id="t-chestShop">Chest Shop</span>
-            </div>
-            <div class="menu-card" onclick="showPopup('Coin Flip', 'Coming soon!')">
-                <span class="menu-icon">🪙</span>
-                <span id="t-coinFlip">Coin Flip (10⭐)</span>
-            </div>
-            <div class="menu-card" onclick="showPopup('Dice Roll', 'Coming soon!')">
-                <span class="menu-icon">🎲</span>
-                <span id="t-diceRoll">Dice Roll (10⭐)</span>
-            </div>
-            <div class="menu-card" onclick="showPopup('Tournament', 'Coming soon!')">
-                <span class="menu-icon">🏆</span>
-                <span id="t-weeklyTourney">Weekly Tournament</span>
-            </div>
-            <div class="menu-card" onclick="showPopup('Promo Code', 'Coming soon!')">
-                <span class="menu-icon">🎟️</span>
-                <span id="t-promoCode">Promo Code</span>
-            </div>
-            <div class="menu-card" onclick="showPopup('Referral System', 'Coming soon!')">
-                <span class="menu-icon">👥</span>
-                <span id="t-refSystem">Referral System</span>
-            </div>
-            <div class="menu-card" onclick="showPopup('VIP', 'Coming soon!')">
-                <span class="menu-icon">⭐</span>
-                <span id="t-buyVip">Buy VIP</span>
-            </div>
-            <div class="menu-card full" onclick="toggleLanguage()">
-                <span class="menu-icon">🌐</span>
-                <span id="t-language">Language: English 🇬🇧</span>
-            </div>
+    <h3>🎁 Рулетка Контента (CS2 Style)</h3>
+
+    <div class="roulette-wrapper">
+        <div class="pointer"></div>
+        <div class="tape" id="tape"></div>
+    </div>
+
+    <button class="btn-spin" id="spin-btn" onclick="startSpin()">🚀 КРУТИТЬ РУЛЕТКУ</button>
+
+    <div class="prize-modal" id="prize-modal">
+        <div class="prize-box">
+            <h2 style="color: #ffd700; margin-top:0;">🎉 ВЫИГРЫШ!</h2>
+            <p id="prize-title" style="font-size: 16px; margin: 15px 0;"></p>
+            <button class="btn-spin" style="background: #2481cc;" onclick="closeModal()">ЗАБРАТЬ</button>
         </div>
-    </div>
-
-    <!-- WHEEL PAGE -->
-    <div id="page-wheel" class="page">
-        <h2 id="t-wheelTitle">Try Your Luck 🎡</h2>
-        <div class="sub-title" id="t-wheelSub">Unique videos without repetitions</div>
-
-        <div class="wheel-box">
-            <div class="pointer"></div>
-            <div class="preview-card" id="previewCard">
-                <div class="blur-content" id="centerPreviewText">🎬 ???</div>
-                <span class="lock-icon" id="lockIcon">🔒</span>
-            </div>
-            <canvas id="wheel" width="280" height="280"></canvas>
-        </div>
-
-        <button class="btn" id="spinBtn" onclick="startSpin()">SPIN WHEEL</button>
-        <div id="resultMsg"></div>
-        <button class="btn btn-secondary" onclick="switchPage('home')" id="t-backBtn1">Back to Menu</button>
-    </div>
-
-    <!-- PROFILE PAGE -->
-    <div id="page-profile" class="page">
-        <h2 id="t-profileTitle">Personal Account 👤</h2>
-        <div style="background: #1e293b; padding: 15px; border-radius: 12px; width: 100%; margin-bottom: 15px;">
-            <p><span id="t-statusLabel">Status</span>: <b style="color: #f59e0b;">Standard</b></p>
-            <p style="margin-top: 8px;"><span id="t-balanceLabel">Balance</span>: <b id="profileStars">0 ⭐</b></p>
-            <p style="margin-top: 8px;"><span id="t-spinsLabel">Spins available</span>: <b id="profileSpins">1</b></p>
-        </div>
-        <button class="btn btn-secondary" onclick="switchPage('home')" id="t-backBtn2">Back to Menu</button>
-    </div>
-
-    <!-- SHOP PAGE -->
-    <div id="page-shop" class="page">
-        <h2 id="t-shopTitle">Chest Shop 🎁</h2>
-        <div style="background: #1e293b; padding: 15px; border-radius: 12px; width: 100%; text-align: center; margin-bottom: 15px;">
-            <p id="t-shopDesc">Buy additional spins with Telegram Stars.</p>
-            <button class="btn" onclick="buySpins(3, 120)" style="margin-top: 15px;" id="t-buyBtn">Buy 3 Spins (120⭐)</button>
-        </div>
-        <button class="btn btn-secondary" onclick="switchPage('home')" id="t-backBtn3">Back to Menu</button>
-    </div>
-
-    <!-- NAVBAR -->
-    <div class="navbar">
-        <button class="nav-item active" onclick="switchPage('home')" id="nav-home">
-            <span class="nav-icon">🏠</span> <span id="t-navMenu">Menu</span>
-        </button>
-        <button class="nav-item" onclick="switchPage('wheel')" id="nav-wheel">
-            <span class="nav-icon">🎡</span> <span id="t-navWheel">Wheel</span>
-        </button>
-        <button class="nav-item" onclick="switchPage('profile')" id="nav-profile">
-            <span class="nav-icon">👤</span> <span id="t-navProfile">Profile</span>
-        </button>
-        <button class="nav-item" onclick="switchPage('shop')" id="nav-shop">
-            <span class="nav-icon">🎁</span> <span id="t-navShop">Shop</span>
-        </button>
     </div>
 
     <script>
+        // АДРЕС ТВОЕГО БЭКЕНДА (меняй на ссылку от ngrok при каждом новом запуске)
+        const BACKEND_URL = "https://твой-ngrok-домен.ngrok-free.app";
+
         const tg = window.Telegram.WebApp;
-        tg.ready();
         tg.expand();
-
-        const user = tg.initDataUnsafe?.user;
-        document.getElementById('userId').innerText = user ? user.id : "486646287";
-
-        let currentLang = localStorage.getItem('appLang') || 'en';
-
-        // Считываем список элементов из URL от бота
-        const urlParams = new URLSearchParams(window.location.search);
-        const itemsParam = urlParams.get('items');
-        
-        let availableSectors = [];
-        if (itemsParam) {
-            try {
-                availableSectors = JSON.parse(decodeURIComponent(itemsParam));
-            } catch(e) {
-                console.log("Error parsing items:", e);
-            }
-        }
-
-        if (!availableSectors || availableSectors.length === 0) {
-            availableSectors = ["Видео #1", "Эксклюзив #2", "Секретный ролик #3", "VIP Видео #4", "Бонус клип #5"];
-        }
-
-        let colors = ["#ef4444", "#3b82f6", "#8b5cf6", "#f59e0b", "#64748b", "#10b981"];
-
-        const i18n = {
-            en: {
-                welcome: "Welcome to the Wheel of Fortune!",
-                tryLuck: "Try Your Luck (Wheel)",
-                profile: "Personal Account",
-                chestShop: "Chest Shop",
-                coinFlip: "Coin Flip (10⭐)",
-                diceRoll: "Dice Roll (10⭐)",
-                weeklyTourney: "Weekly Tournament",
-                promoCode: "Promo Code",
-                refSystem: "Referral System",
-                buyVip: "Buy VIP",
-                language: "Language: English 🇬🇧",
-                wheelTitle: "Try Your Luck 🎡",
-                wheelSub: "Unique videos without repetitions",
-                spinBtn: "SPIN WHEEL",
-                backBtn: "Back to Menu",
-                profileTitle: "Personal Account 👤",
-                statusLabel: "Status",
-                balanceLabel: "Balance",
-                spinsLabel: "Spins available",
-                shopTitle: "Chest Shop 🎁",
-                shopDesc: "Buy additional spins with Telegram Stars.",
-                buyBtn: "Buy 3 Spins (120⭐)",
-                navMenu: "Menu",
-                navWheel: "Wheel",
-                navProfile: "Profile",
-                navShop: "Shop",
-                spinning: "Spinning...",
-                won: "Unlocked: ",
-                allWon: "All videos unlocked!"
-            },
-            ru: {
-                welcome: "Добро пожаловать в Колесо Фортуны!",
-                tryLuck: "Испытать удачу (Колесо)",
-                profile: "Личный кабинет",
-                chestShop: "Магазин Сундуков",
-                coinFlip: "Орёл и Решка (10⭐)",
-                diceRoll: "Бросок кубика (10⭐)",
-                weeklyTourney: "Турнир недели",
-                promoCode: "Промокод",
-                refSystem: "Реферальная система",
-                buyVip: "Buy VIP",
-                language: "Язык: Русский 🇷🇺",
-                wheelTitle: "Испытать удачу 🎡",
-                wheelSub: "Уникальные видео без повторений",
-                spinBtn: "КРУТИТЬ КОЛЕСО",
-                backBtn: "Назад в меню",
-                profileTitle: "Личный кабинет 👤",
-                statusLabel: "Статус",
-                balanceLabel: "Баланс",
-                spinsLabel: "Доступно спинов",
-                shopTitle: "Магазин Сундуков 🎁",
-                shopDesc: "Покупайте дополнительные попытки за Telegram Stars.",
-                buyBtn: "Купить 3 спина (120⭐)",
-                navMenu: "Меню",
-                navWheel: "Колесо",
-                navProfile: "Профиль",
-                navShop: "Магазин",
-                spinning: "Вращаем...",
-                won: "Выиграно: ",
-                allWon: "Все видео разблокированы!"
-            }
-        };
-
-        function showPopup(title, message) {
-            if (tg.showPopup) {
-                tg.showPopup({ title: title, message: message, buttons: [{ type: 'ok' }] });
-            } else {
-                alert(title + ": " + message);
-            }
-        }
-
-        function updateLanguage() {
-            const l = i18n[currentLang];
-            document.getElementById('t-welcome').innerText = l.welcome;
-            document.getElementById('t-tryLuck').innerText = l.tryLuck;
-            document.getElementById('t-profile').innerText = l.profile;
-            document.getElementById('t-chestShop').innerText = l.chestShop;
-            document.getElementById('t-coinFlip').innerText = l.coinFlip;
-            document.getElementById('t-diceRoll').innerText = l.diceRoll;
-            document.getElementById('t-weeklyTourney').innerText = l.weeklyTourney;
-            document.getElementById('t-promoCode').innerText = l.promoCode;
-            document.getElementById('t-refSystem').innerText = l.refSystem;
-            document.getElementById('t-buyVip').innerText = l.buyVip;
-            document.getElementById('t-language').innerText = l.language;
-            document.getElementById('t-wheelTitle').innerText = l.wheelTitle;
-            document.getElementById('t-wheelSub').innerText = l.wheelSub;
-            document.getElementById('spinBtn').innerText = l.spinBtn;
-            document.getElementById('t-backBtn1').innerText = l.backBtn;
-            document.getElementById('t-backBtn2').innerText = l.backBtn;
-            document.getElementById('t-backBtn3').innerText = l.backBtn;
-            document.getElementById('t-profileTitle').innerText = l.profileTitle;
-            document.getElementById('t-statusLabel').innerText = l.statusLabel;
-            document.getElementById('t-balanceLabel').innerText = l.balanceLabel;
-            document.getElementById('t-spinsLabel').innerText = l.spinsLabel;
-            document.getElementById('t-shopTitle').innerText = l.shopTitle;
-            document.getElementById('t-shopDesc').innerText = l.shopDesc;
-            document.getElementById('t-buyBtn').innerText = l.buyBtn;
-            document.getElementById('t-navMenu').innerText = l.navMenu;
-            document.getElementById('t-navWheel').innerText = l.navWheel;
-            document.getElementById('t-navProfile').innerText = l.navProfile;
-            document.getElementById('t-navShop').innerText = l.navShop;
-        }
-
-        function toggleLanguage() {
-            currentLang = currentLang === 'en' ? 'ru' : 'en';
-            localStorage.setItem('appLang', currentLang);
-            updateLanguage();
-        }
-
-        function switchPage(pageId) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            
-            document.getElementById('page-' + pageId).classList.add('active');
-            if(document.getElementById('nav-' + pageId)) {
-                document.getElementById('nav-' + pageId).classList.add('active');
-            }
-        }
-
-        const canvas = document.getElementById('wheel');
-        const ctx = canvas.getContext('2d');
-        let currentAngle = 0;
+        let dbItems = [];
         let isSpinning = false;
 
-        function drawWheel() {
-            ctx.clearRect(0, 0, 280, 280);
-            if (availableSectors.length === 0) {
-                ctx.fillStyle = "#94a3b8";
-                ctx.font = "bold 14px Arial";
-                ctx.textAlign = "center";
-                ctx.fillText(i18n[currentLang].allWon, 140, 140);
-                return;
-            }
+        // Загрузка профиля
+        fetch(`${BACKEND_URL}/api/profile`, { 
+            headers: { 'Authorization': tg.initData } 
+        })
+        .then(r => r.json())
+        .then(d => {
+            document.getElementById('user-id').innerText = d.user_id;
+            document.getElementById('balance').innerText = d.balance;
+        }).catch(err => console.error("Ошибка загрузки профиля:", err));
 
-            const arc = (2 * Math.PI) / availableSectors.length;
-            for (let i = 0; i < availableSectors.length; i++) {
-                const angle = currentAngle + i * arc;
-                ctx.beginPath();
-                ctx.fillStyle = colors[i % colors.length];
-                ctx.moveTo(140, 140);
-                ctx.arc(140, 140, 140, angle, angle + arc);
-                ctx.lineTo(140, 140);
-                ctx.fill();
+        // Загрузка контента для ленты рулетки
+        fetch(`${BACKEND_URL}/api/content_items`)
+            .then(r => r.json())
+            .then(d => { dbItems = d.items; buildTape(); })
+            .catch(err => console.error("Ошибка загрузки контента:", err));
 
-                ctx.save();
-                ctx.translate(140, 140);
-                ctx.rotate(angle + arc / 2);
-                ctx.textAlign = "right";
-                ctx.fillStyle = "#ffffff";
-                ctx.font = "bold 11px Arial";
-                ctx.fillText("🎬 " + availableSectors[i], 120, 4);
-                ctx.restore();
+        function buildTape() {
+            const tape = document.getElementById('tape');
+            tape.innerHTML = '';
+            for (let i = 0; i < 60; i++) {
+                const item = dbItems[i % dbItems.length];
+                const div = document.createElement('div');
+                div.className = 'case-item';
+                div.style.borderColor = item.color;
+                div.innerHTML = `<div style="font-size: 30px; margin-bottom: 5px;">🎁</div><div class="item-title">${item.title}</div>`;
+                tape.appendChild(div);
             }
         }
-        drawWheel();
-        updateLanguage();
 
         function startSpin() {
-            if (isSpinning || availableSectors.length === 0) return;
-            isSpinning = true;
-            document.getElementById('spinBtn').disabled = true;
-            document.getElementById('resultMsg').innerText = i18n[currentLang].spinning;
-            document.getElementById('previewCard').classList.remove('unlocked');
-            document.getElementById('lockIcon').style.display = 'block';
-            document.getElementById('centerPreviewText').innerText = "🎬 ???";
+            if (isSpinning) return;
+            fetch(`${BACKEND_URL}/api/spin`, { 
+                method: 'POST', 
+                headers: { 'Authorization': tg.initData } 
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success) { tg.showAlert(data.message); return; }
+                isSpinning = true;
+                document.getElementById('spin-btn').disabled = true;
 
-            const winningIndex = Math.floor(Math.random() * availableSectors.length);
-            const sectorArc = (2 * Math.PI) / availableSectors.length;
-            const targetAngle = (2 * Math.PI) - (winningIndex * sectorArc) - (sectorArc / 2);
-            const totalRotation = currentAngle + (5 * 2 * Math.PI) + (targetAngle - (currentAngle % (2 * Math.PI)));
+                const tape = document.getElementById('tape');
+                const itemWidth = 108;
+                const targetX = (45 * itemWidth) - (document.querySelector('.roulette-wrapper').offsetWidth / 2) + (itemWidth / 2) + (Math.random() * 60 - 30);
 
-            const duration = 4000;
-            const startTime = performance.now();
+                tape.style.transition = 'transform 5s cubic-bezier(0.15, 0.9, 0.2, 1)';
+                tape.style.transform = `translateX(-${targetX}px)`;
 
-            function animate(time) {
-                let elapsed = time - startTime;
-                let progress = Math.min(elapsed / duration, 1);
-                let easeOut = 1 - Math.pow(1 - progress, 4);
-
-                currentAngle = easeOut * totalRotation;
-                drawWheel();
-
-                if (progress < 1) {
-                    requestAnimationFrame(animate);
-                } else {
-                    isSpinning = false;
-                    const wonPrize = availableSectors[winningIndex];
-                    
-                    // Исключаем выигранный видеоролик из колеса
-                    availableSectors.splice(winningIndex, 1);
-                    drawWheel();
-
-                    document.getElementById('centerPreviewText').innerText = "🎬 " + wonPrize;
-                    document.getElementById('previewCard').classList.add('unlocked');
-                    document.getElementById('lockIcon').style.display = 'none';
-                    document.getElementById('resultMsg').innerText = i18n[currentLang].won + wonPrize;
-
-                    if (availableSectors.length > 0) {
-                        document.getElementById('spinBtn').disabled = false;
-                    }
-
-                    try {
-                        tg.sendData(JSON.stringify({
-                            action: "spin_win",
-                            prize: wonPrize
-                        }));
-                    } catch(e) {
-                        console.log("sendData error:", e);
-                    }
+                if (tg.HapticFeedback) {
+                    let ticks = 0;
+                    const interval = setInterval(() => { tg.HapticFeedback.impactOccurred('light'); ticks++; if(ticks > 25) clearInterval(interval); }, 150);
                 }
-            }
-            requestAnimationFrame(animate);
-        }
 
-        function buySpins(count, price) {
-            try {
-                tg.sendData(JSON.stringify({
-                    action: "buy_stars",
-                    count: count,
-                    price: price
-                }));
-            } catch(e) {
-                showPopup("Shop", `Order ${count} spins for ${price}⭐`);
-            }
+                setTimeout(() => {
+                    isSpinning = false;
+                    document.getElementById('spin-btn').disabled = false;
+                    document.getElementById('balance').innerText = data.balance;
+                    document.getElementById('prize-title').innerText = data.title;
+                    document.getElementById('prize-modal').style.display = 'flex';
+                    if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+
+                    setTimeout(() => {
+                        tape.style.transition = 'none';
+                        tape.style.transform = 'translateX(0px)';
+                    }, 1000);
+                }, 5200);
+            })
+            .catch(err => {
+                isSpinning = false;
+                document.getElementById('spin-btn').disabled = false;
+                tg.showAlert("Ошибка соединения с сервером!");
+            });
         }
+        function closeModal() { document.getElementById('prize-modal').style.display = 'none'; }
     </script>
 </body>
 </html>

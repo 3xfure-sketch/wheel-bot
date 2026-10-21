@@ -2,17 +2,17 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Content Wheel</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
         body {
             background-color: #12151c;
             color: #ffffff;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             padding: 12px;
-            padding-bottom: 75px;
+            padding-bottom: calc(75px + env(safe-area-inset-bottom, 0px));
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -20,7 +20,7 @@
 
         .top-banner { font-size: 11px; color: #7a8290; margin-bottom: 12px; text-align: center; }
         .top-bar {
-            width: 100%; display: flex; justify-content: space-between;
+            width: 100%; max-width: 400px; display: flex; justify-content: space-between;
             align-items: center; margin-bottom: 15px; font-size: 14px; font-weight: bold;
         }
         .user-id { color: #e1e4ea; }
@@ -42,8 +42,13 @@
             position: absolute; top: 0; bottom: 0; left: 50%; width: 2px;
             background: #ff3b30; box-shadow: 0 0 8px #ff3b30; z-index: 10; transform: translateX(-50%);
         }
-        .prize-card { display: flex; flex-direction: column; align-items: center; gap: 6px; opacity: 0.7; font-size: 11px; font-weight: 600; }
-        .prize-card.active { opacity: 1; }
+        .prize-card {
+            display: flex; flex-direction: column; align-items: center; gap: 6px;
+            opacity: 0.5; font-size: 11px; font-weight: 600;
+            padding: 8px 10px; border-radius: 10px; border: 1px solid transparent;
+            transition: opacity .1s, transform .1s, border-color .1s;
+        }
+        .prize-card.active { opacity: 1; transform: scale(1.1); border-color: #ff4d3d; background: rgba(255, 77, 61, 0.08); }
         .prize-icon { font-size: 22px; }
 
         .spin-button {
@@ -57,35 +62,32 @@
         }
         .spin-button:active:not(:disabled) { transform: scale(0.98); }
 
-        .timer-text { font-size: 12px; color: #ffb703; margin-bottom: 15px; text-align: center; font-weight: 600; }
+        .timer-text { font-size: 12px; color: #ffb703; margin-bottom: 15px; text-align: center; font-weight: 600; min-height: 16px; }
 
         .section-container { width: 100%; display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
         .spins-packs-title { color: #ffffff; font-size: 16px; font-weight: bold; margin-bottom: 8px; text-align: center; }
-        .stars-pack-btn {
+        .stars-pack-btn, .vip-card-btn {
             width: 100%; background: linear-gradient(180deg, #ff4d3d 0%, #e63020 100%);
             color: #ffffff; border: none; border-radius: 12px; padding: 13px;
             font-size: 15px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(230, 48, 32, 0.3);
         }
-        .stars-pack-btn:active { transform: scale(0.98); }
-
-        /* SHOP TAB */
-        .vip-card-btn {
-            width: 100%; background: linear-gradient(180deg, #ff4d3d 0%, #e63020 100%);
-            color: #ffffff; border: none; border-radius: 12px; padding: 14px;
-            font-size: 16px; font-weight: bold; cursor: pointer; margin-bottom: 10px;
-            box-shadow: 0 4px 12px rgba(230, 48, 32, 0.3);
-        }
+        .stars-pack-btn:active, .vip-card-btn:active { transform: scale(0.98); }
+        .stars-pack-btn:disabled, .vip-card-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
         .info-card {
             width: 100%; background: #181c26; border: 1px solid #232936;
             border-radius: 12px; padding: 15px; margin-bottom: 10px; text-align: center;
         }
 
+        .leader-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #232936; font-size: 14px; }
+        .leader-row:last-child { border-bottom: none; }
+
         /* BOTTOM NAV */
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; right: 0;
             background: #12151c; border-top: 1px solid #1e2330;
-            display: flex; justify-content: space-around; padding: 8px 0; z-index: 100;
+            display: flex; justify-content: space-around;
+            padding: 8px 0; padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px)); z-index: 100;
         }
         .nav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10px; color: #646c7a; cursor: pointer; }
         .nav-item.active { color: #ff4d3d; }
@@ -95,11 +97,11 @@
 <body>
 
     <div class="top-banner">
-        Free spin every 24h (VIP every 12h) & 20% discount on purchases!
+        Free spin every 24h (VIP every 12h) &amp; 20% discount on purchases!
     </div>
 
     <div class="top-bar">
-        <div class="user-id" id="user-id">ID: ... <span id="vip-tag"></span></div>
+        <div class="user-id">ID: <span id="user-id">...</span><span id="vip-tag"></span></div>
         <div class="spins-count">★ <span id="spins-count">0</span> spins</div>
     </div>
 
@@ -109,9 +111,9 @@
 
         <div class="wheel-container">
             <div class="wheel-pointer"></div>
-            <div class="prize-card"><div class="prize-icon">📷</div><div>Photo #1</div></div>
-            <div class="prize-card active"><div class="prize-icon">🎬</div><div>Video Pack</div></div>
-            <div class="prize-card"><div class="prize-icon">🔥</div><div>Exclusive</div></div>
+            <div class="prize-card" data-prize="photo"><div class="prize-icon">📷</div><div>Photo #1</div></div>
+            <div class="prize-card active" data-prize="video"><div class="prize-icon">🎬</div><div>Video Pack</div></div>
+            <div class="prize-card" data-prize="exclusive"><div class="prize-icon">🔥</div><div>Exclusive</div></div>
         </div>
 
         <button id="spin-btn" class="spin-button" onclick="spinWheel()">Spin Wheel</button>
@@ -119,19 +121,19 @@
 
         <div class="spins-packs-title">★ Spins Packs</div>
         <div class="section-container">
-            <button class="stars-pack-btn" onclick="buySpinsPackage(1, 45)">🎰 1 Spin — 45 Stars</button>
-            <button class="stars-pack-btn" onclick="buySpinsPackage(3, 125)">🎰 3 Spins — 125 Stars</button>
-            <button class="stars-pack-btn" onclick="buySpinsPackage(5, 190)">🎰 5 Spins — 190 Stars</button>
-            <button class="stars-pack-btn" onclick="buySpinsPackage(10, 350)">🎰 10 Spins — 350 Stars</button>
+            <button class="stars-pack-btn" onclick="buySpinsPackage(1, 45, this)">🎰 1 Spin — 45 Stars</button>
+            <button class="stars-pack-btn" onclick="buySpinsPackage(3, 125, this)">🎰 3 Spins — 125 Stars</button>
+            <button class="stars-pack-btn" onclick="buySpinsPackage(5, 190, this)">🎰 5 Spins — 190 Stars</button>
+            <button class="stars-pack-btn" onclick="buySpinsPackage(10, 350, this)">🎰 10 Spins — 350 Stars</button>
         </div>
     </div>
 
     <!-- 2. SHOP TAB -->
     <div id="tab-shop" class="tab-screen">
-        <div class="main-title">Store & VIP Passes</div>
+        <div class="main-title">Store &amp; VIP Passes</div>
         <div class="section-container">
-            <button class="vip-card-btn" onclick="buyVIP(7, 90)">🎟️ VIP 7 Days — 90 Stars</button>
-            <button class="vip-card-btn" onclick="buyVIP(30, 190)">🎟️ VIP 30 Days — 190 Stars</button>
+            <button class="vip-card-btn" onclick="buyVIP(7, 90, this)">🎟️ VIP 7 Days — 90 Stars</button>
+            <button class="vip-card-btn" onclick="buyVIP(30, 190, this)">🎟️ VIP 30 Days — 190 Stars</button>
         </div>
     </div>
 
@@ -139,19 +141,24 @@
     <div id="tab-games" class="tab-screen">
         <div class="main-title">Mini Games (10 ⭐)</div>
         <div class="info-card" style="margin-bottom: 15px;">
-            🎲 <b>Coin Flip & Dice</b><br>
+            🎲 <b>Coin Flip &amp; Dice</b><br>
             Try your luck and win a <b>+1 Spin</b> or <b>VIP for 1 Day</b>!
         </div>
         <div class="section-container">
-            <button class="stars-pack-btn" onclick="playGame('coin')">🪙 Play Coin Flip (10 ⭐)</button>
-            <button class="stars-pack-btn" onclick="playGame('dice')">🎲 Play Dice Roll (10 ⭐)</button>
+            <button class="stars-pack-btn" onclick="playGame('coin', this)">🪙 Play Coin Flip (10 ⭐)</button>
+            <button class="stars-pack-btn" onclick="playGame('dice', this)">🎲 Play Dice Roll (10 ⭐)</button>
         </div>
     </div>
 
     <!-- 4. TOP TAB -->
     <div id="tab-top" class="tab-screen">
-        <div class="main-title">Leaderboard</div>
-        <div class="info-card">🏆 Top players list</div>
+        <div class="main-title">Weekly Leaderboard</div>
+        <div class="info-card" style="font-size: 12px; line-height: 1.6;">
+            🏆 The top player of the week gets <b>+5 spins</b> every Monday. Points reset weekly.<br>
+            <span style="color:#7a8290;">Free spin 0.5 · Paid spin 1 · VIP 1 · 3 spins pack 2 · 5 spins pack 3 · 10 spins pack 5</span>
+        </div>
+        <div class="info-card" id="leaderboard-me">...</div>
+        <div class="info-card" id="leaderboard">Loading...</div>
     </div>
 
     <!-- 5. PROFILE TAB -->
@@ -160,6 +167,7 @@
         <div class="info-card">
             👤 <b>Telegram ID:</b> <span id="profile-user-id">...</span><br><br>
             ⭐ <b>Spins Balance:</b> <span id="profile-spins-count">0</span><br><br>
+            🏅 <b>Points this week:</b> <span id="profile-week-points">0</span><br><br>
             👑 <b>Status:</b> <span id="profile-status">Regular</span>
         </div>
     </div>
@@ -174,60 +182,129 @@
     </div>
 
     <script>
-        const BACKEND_URL = "http://2.56.119.39:8001";
-        const tg = window.Telegram?.WebApp;
-        if (tg) tg.expand();
+        // Страница отдаётся самим бэкендом, поэтому адрес API = адрес страницы (HTTPS, без mixed content).
+        // Если страница лежит на другом хостинге, укажите здесь https://ваш-домен
+        const BACKEND_URL = window.location.origin;
 
-        let nextFreeSpinTime = null;
+        const tg = window.Telegram?.WebApp;
+        if (tg) { tg.ready(); tg.expand(); }
+
+        const DEV_USER_ID = 123456789; // только для теста вне Telegram
+
+        let currentSpins = 0;
+        let nextFreeSpinTime = null; // unix-секунды
         let timerInterval = null;
+        let isSpinning = false;
+        let vipUntil = 0;
+
+        const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+        // Оплата доходит до бота с небольшой задержкой: опрашиваем сервер, пока данные не обновятся
+        async function refreshUntil(checkFn, tries = 15) {
+            for (let i = 0; i < tries; i++) {
+                await loadUserData();
+                if (checkFn()) return true;
+                await sleep(1000);
+            }
+            return false;
+        }
+
+        function getTgUserId() {
+            return tg?.initDataUnsafe?.user?.id || null;
+        }
+
+        function alertMsg(text) {
+            if (tg?.showAlert) tg.showAlert(text); else alert(text);
+        }
+
+        // Все запросы отправляют initData: сервер ОБЯЗАН проверить подпись и взять user_id оттуда
+        async function api(path, options = {}) {
+            const response = await fetch(`${BACKEND_URL}${path}`, {
+                ...options,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Telegram-Init-Data': tg?.initData || '',
+                    ...(options.headers || {})
+                }
+            });
+            if (!response.ok) {
+                let detail = `HTTP ${response.status}`;
+                try { const j = await response.json(); if (typeof j.detail === 'string') detail = j.detail; } catch (_) {}
+                throw new Error(detail);
+            }
+            return response.json();
+        }
+
+        function post(path, body) {
+            return api(path, { method: 'POST', body: JSON.stringify(body) });
+        }
 
         async function loadUserData() {
-            const userId = tg?.initDataUnsafe?.user?.id || 123456789;
-            document.getElementById('user-id').innerText = `ID: ${userId}`;
+            const userId = getTgUserId() || DEV_USER_ID;
+            document.getElementById('user-id').innerText = userId;
             document.getElementById('profile-user-id').innerText = userId;
 
             try {
-                const response = await fetch(`${BACKEND_URL}/user/${userId}`);
-                const data = await response.json();
-                if (data) {
-                    document.getElementById('spins-count').innerText = data.spins;
-                    document.getElementById('profile-spins-count').innerText = data.spins;
-                    
-                    if (data.is_vip) {
-                        document.getElementById('vip-tag').innerHTML = `<span class="vip-badge">VIP</span>`;
-                        document.getElementById('profile-status').innerText = "VIP Member 👑";
-                    }
+                const data = await api(`/user/${userId}`);
+                if (!data) return;
 
-                    if (data.next_free_spin_timestamp) {
-                        nextFreeSpinTime = data.next_free_spin_timestamp;
-                        startCountdown();
-                    }
+                currentSpins = Number(data.spins) || 0;
+                vipUntil = Number(data.vip_until) || 0;
+                document.getElementById('spins-count').innerText = currentSpins;
+                document.getElementById('profile-spins-count').innerText = currentSpins;
+                document.getElementById('profile-week-points').innerText = Number(data.week_points) || 0;
+
+                const vipTag = document.getElementById('vip-tag');
+                if (data.is_vip) {
+                    vipTag.innerHTML = `<span class="vip-badge">VIP</span>`;
+                    document.getElementById('profile-status').innerText = "VIP Member 👑";
+                } else {
+                    vipTag.innerHTML = "";
+                    document.getElementById('profile-status').innerText = "Regular";
                 }
-            } catch (e) { console.error("Ошибка загрузки:", e); }
+
+                nextFreeSpinTime = data.next_free_spin_timestamp ? Number(data.next_free_spin_timestamp) : null;
+                startCountdown();
+            } catch (e) {
+                console.error("Load error:", e);
+            }
+        }
+
+        function isFreeSpinAvailable() {
+            if (!nextFreeSpinTime) return true;
+            return nextFreeSpinTime <= Math.floor(Date.now() / 1000);
+        }
+
+        function updateSpinButton() {
+            const btn = document.getElementById('spin-btn');
+            const timerDisplay = document.getElementById('timer-display');
+            const free = isFreeSpinAvailable();
+
+            if (free) {
+                btn.disabled = isSpinning;
+                btn.innerText = "Spin Wheel (Free)";
+                timerDisplay.innerText = "🎁 Free spin available now!";
+                return true; // таймер больше не нужен
+            }
+
+            const diff = nextFreeSpinTime - Math.floor(Date.now() / 1000);
+            const h = Math.floor(diff / 3600);
+            const m = Math.floor((diff % 3600) / 60);
+            const s = diff % 60;
+            timerDisplay.innerText = `Next Free Spin in: ${h}h ${m}m ${s}s`;
+
+            // Купленные спины можно крутить, даже пока идёт таймер бесплатного
+            btn.disabled = isSpinning || currentSpins <= 0;
+            btn.innerText = currentSpins > 0 ? "Spin Wheel (1 Spin)" : "No spins left";
+            return false;
         }
 
         function startCountdown() {
             if (timerInterval) clearInterval(timerInterval);
-            const btn = document.getElementById('spin-btn');
-            const timerDisplay = document.getElementById('timer-display');
-
+            const done = updateSpinButton();
+            if (done) return;
             timerInterval = setInterval(() => {
-                const now = Math.floor(Date.now() / 1000);
-                const diff = nextFreeSpinTime - now;
-
-                if (diff <= 0) {
-                    clearInterval(timerInterval);
-                    btn.disabled = false;
-                    btn.innerText = "Spin Wheel (Free)";
-                    timerDisplay.innerText = "🎁 Free spin available now!";
-                } else {
-                    btn.disabled = true;
-                    const hours = Math.floor(diff / 3600);
-                    const minutes = Math.floor((diff % 3600) / 60);
-                    const seconds = diff % 60;
-                    btn.innerText = `Spin Wheel (1 Spin)`;
-                    timerDisplay.innerText = `Next Free Spin in: ${hours}h ${minutes}m ${seconds}s`;
-                }
+                if (updateSpinButton()) clearInterval(timerInterval);
             }, 1000);
         }
 
@@ -236,110 +313,182 @@
             document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
             document.getElementById(`tab-${tabName}`).classList.add('active');
             element.classList.add('active');
+            if (tabName === 'top') loadLeaderboard();
+        }
+
+        // ---------- Анимация колеса ----------
+        function animateWheel(prizeName) {
+            const cards = Array.from(document.querySelectorAll('.prize-card'));
+            const name = String(prizeName || '').toLowerCase();
+            let target = cards.findIndex(c => name.includes(c.dataset.prize));
+            if (target < 0) target = Math.floor(Math.random() * cards.length);
+
+            return new Promise(resolve => {
+                const totalSteps = cards.length * 4 + target;
+                let step = 0;
+                const tick = () => {
+                    cards.forEach(c => c.classList.remove('active'));
+                    cards[step % cards.length].classList.add('active');
+                    step++;
+                    if (step > totalSteps) return resolve();
+                    setTimeout(tick, 70 + step * 6); // замедление к концу
+                };
+                tick();
+            });
         }
 
         async function spinWheel() {
-            const userId = tg?.initDataUnsafe?.user?.id || 123456789;
+            if (isSpinning) return;
+            const userId = getTgUserId() || DEV_USER_ID;
+            const btn = document.getElementById('spin-btn');
+
+            isSpinning = true;
+            btn.disabled = true;
+
             try {
-                const response = await fetch(`${BACKEND_URL}/spin`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userId })
-                });
-                const res = await response.json();
+                const res = await post('/spin', { user_id: userId });
                 if (res.success) {
-                    tg?.showAlert(`🎉 You won: ${res.prize}!`);
-                    loadUserData();
+                    await animateWheel(res.prize);
+                    alertMsg(`🎉 You won: ${res.prize}!`);
                 } else {
-                    tg?.showAlert(res.message || "No spins available!");
-                }
-            } catch (err) {
-                tg?.showAlert("Spin error.");
-            }
-        }
-
-        async function buySpinsPackage(spinsAmount, starsPrice) {
-            const userId = tg?.initDataUnsafe?.user?.id;
-            if (!userId) return alert("Telegram ID not found.");
-
-            try {
-                const response = await fetch(`${BACKEND_URL}/create-stars-invoice`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userId, spins_amount: spinsAmount, stars_price: starsPrice })
-                });
-                const data = await response.json();
-                if (data.invoice_link) {
-                    tg.openInvoice(data.invoice_link, (status) => {
-                        if (status === 'paid') {
-                            tg.showAlert(`🎉 +${spinsAmount} spins added!`);
-                            loadUserData();
-                        }
-                    });
-                }
-            } catch (err) { console.error(err); }
-        }
-
-        async function buyVIP(days, price) {
-            const userId = tg?.initDataUnsafe?.user?.id;
-            if (!userId) return alert("Telegram ID not found.");
-
-            try {
-                const response = await fetch(`${BACKEND_URL}/create-vip-invoice`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userId, vip_days: days, stars_price: price })
-                });
-                const data = await response.json();
-                if (data.invoice_link) {
-                    tg.openInvoice(data.invoice_link, (status) => {
-                        if (status === 'paid') {
-                            tg.showAlert(`👑 VIP status activated for ${days} days!`);
-                            loadUserData();
-                        }
-                    });
-                }
-            } catch (err) { console.error(err); }
-        }
-
-        async function playGame(gameType) {
-            const userId = tg?.initDataUnsafe?.user?.id;
-            if (!userId) return alert("Telegram ID not found.");
-
-            try {
-                const response = await fetch(`${BACKEND_URL}/create-game-invoice`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userId, game_type: gameType, stars_price: 10 })
-                });
-                const data = await response.json();
-                
-                if (data.invoice_link) {
-                    tg.openInvoice(data.invoice_link, async (status) => {
-                        if (status === 'paid') {
-                            const resFetch = await fetch(`${BACKEND_URL}/play-game`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ user_id: userId, game_type: gameType })
-                            });
-                            const gameResult = await resFetch.json();
-                            
-                            if (gameResult.won) {
-                                tg?.showAlert(`🎉 CONGRATULATIONS! You won: ${gameResult.prize_name}!`);
-                            } else {
-                                tg?.showAlert(`😢 You lost! Better luck next time.`);
-                            }
-                            loadUserData();
-                        }
-                    });
+                    alertMsg(res.message || "No spins available!");
                 }
             } catch (err) {
                 console.error(err);
-                tg?.showAlert("Error starting the game.");
+                alertMsg(err.message || "Spin error. Try again later.");
+            } finally {
+                isSpinning = false;
+                await loadUserData();
             }
         }
 
+        // ---------- Лидерборд ----------
+        async function loadLeaderboard() {
+            const box = document.getElementById('leaderboard');
+            const meBox = document.getElementById('leaderboard-me');
+            try {
+                const data = await api('/leaderboard');
+                const players = Array.isArray(data.players) ? data.players : [];
+
+                // Моя строка: баллы, место и время до конца недели
+                const left = Math.max(0, Number(data.week_ends) - Math.floor(Date.now() / 1000));
+                const days = Math.floor(left / 86400);
+                const hours = Math.floor((left % 86400) / 3600);
+                const mins = Math.floor((left % 3600) / 60);
+                let meText = `Your points: ${data.me?.points ?? 0}`;
+                if (data.me?.rank) meText += `  ·  Place: #${data.me.rank}`;
+                meText += `\nWeek ends in: ${days}d ${hours}h ${mins}m`;
+                if (data.last_winner) meText += `\nLast week's winner: ${data.last_winner.name} (${data.last_winner.points})`;
+                meBox.style.whiteSpace = 'pre-line';
+                meBox.textContent = meText;
+
+                if (players.length === 0) {
+                    box.textContent = "No players yet this week";
+                    return;
+                }
+                box.textContent = "";
+                players.forEach((p, i) => {
+                    const row = document.createElement('div');
+                    row.className = 'leader-row';
+                    const name = document.createElement('span');
+                    name.textContent = `${i + 1}. ${p.name}`;
+                    const score = document.createElement('span');
+                    score.textContent = p.score;
+                    row.append(name, score);
+                    box.appendChild(row);
+                });
+            } catch (e) {
+                console.error(e);
+                meBox.textContent = "";
+                box.textContent = e.message && e.message.length < 80 ? e.message : "Leaderboard is unavailable";
+            }
+        }
+
+        // ---------- Платежи ----------
+        function openInvoiceFlow(invoiceLink, onPaid) {
+            if (!tg?.openInvoice) return alertMsg("Open this app inside Telegram.");
+            tg.openInvoice(invoiceLink, async (status) => {
+                if (status === 'paid') {
+                    await onPaid();
+                } else if (status === 'failed') {
+                    alertMsg("Payment failed. Please try again.");
+                }
+                // 'cancelled' / 'pending' — ничего не делаем
+            });
+        }
+
+        async function withBusy(btn, fn) {
+            if (btn?.disabled) return;
+            if (btn) btn.disabled = true;
+            try { await fn(); }
+            catch (err) { console.error(err); alertMsg("Something went wrong. Try again later."); }
+            finally { if (btn) btn.disabled = false; }
+        }
+
+        async function buySpinsPackage(spinsAmount, starsPrice, btn) {
+            const userId = getTgUserId();
+            if (!userId) return alertMsg("Telegram ID not found. Open the app inside Telegram.");
+
+            await withBusy(btn, async () => {
+                const data = await post('/create-stars-invoice', { user_id: userId, spins_amount: spinsAmount, stars_price: starsPrice });
+                if (!data.invoice_link) return alertMsg(data.message || "Could not create invoice.");
+                const before = currentSpins;
+                openInvoiceFlow(data.invoice_link, async () => {
+                    const ok = await refreshUntil(() => currentSpins >= before + spinsAmount);
+                    alertMsg(ok ? `🎉 +${spinsAmount} spins added!`
+                                : "Payment received. Spins will appear in a moment, reopen the app if not.");
+                });
+            });
+        }
+
+        async function buyVIP(days, price, btn) {
+            const userId = getTgUserId();
+            if (!userId) return alertMsg("Telegram ID not found. Open the app inside Telegram.");
+
+            await withBusy(btn, async () => {
+                const data = await post('/create-vip-invoice', { user_id: userId, vip_days: days, stars_price: price });
+                if (!data.invoice_link) return alertMsg(data.message || "Could not create invoice.");
+                const before = vipUntil;
+                openInvoiceFlow(data.invoice_link, async () => {
+                    const ok = await refreshUntil(() => vipUntil > before);
+                    alertMsg(ok ? `👑 VIP status activated for ${days} days!`
+                                : "Payment received. VIP will activate in a moment, reopen the app if not.");
+                });
+            });
+        }
+
+        async function playGame(gameType, btn) {
+            const userId = getTgUserId();
+            if (!userId) return alertMsg("Telegram ID not found. Open the app inside Telegram.");
+
+            await withBusy(btn, async () => {
+                const data = await post('/create-game-invoice', { user_id: userId, game_type: gameType, stars_price: 10 });
+                if (!data.invoice_link) return alertMsg(data.message || "Could not start the game.");
+                openInvoiceFlow(data.invoice_link, async () => {
+                    try {
+                        const result = await post('/play-game', { user_id: userId, game_type: gameType });
+                        if (result.won) alertMsg(`🎉 CONGRATULATIONS! You won: ${result.prize_name}!`);
+                        else alertMsg("😢 You lost! Better luck next time.");
+                    } catch (e) {
+                        console.error(e);
+                        alertMsg("Could not get the game result. Check your balance later.");
+                    }
+                    await loadUserData();
+                });
+            });
+        }
+
         loadUserData();
+
+        // Разрешение боту писать пользователю (для напоминаний о бесплатном спине). Спрашиваем один раз.
+        setTimeout(() => {
+            try {
+                if (tg?.requestWriteAccess && tg.isVersionAtLeast?.('6.9') && !localStorage.getItem('write_access_asked')) {
+                    localStorage.setItem('write_access_asked', '1');
+                    tg.requestWriteAccess();
+                }
+            } catch (_) {}
+        }, 2000);
     </script>
 </body>
 </html>

@@ -7,12 +7,12 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --text-color: #f8fafc;
-            --hint-color: #94a3b8;
-            --accent: #38bdf8;
-            --gold: #f59e0b;
+            --bg-color: #18222d;
+            --card-bg: #232e3c;
+            --text-color: #ffffff;
+            --hint-color: #8a96a3;
+            --accent: #2481cc;
+            --gold: #f39c12;
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -36,7 +36,6 @@
             box-sizing: border-box;
             align-items: center;
             margin-bottom: 16px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
         .balance {
             color: var(--gold);
@@ -50,24 +49,21 @@
             background: var(--card-bg);
             display: flex;
             justify-content: space-around;
-            padding: 12px 0;
-            border-top: 1px solid rgba(255,255,255,0.05);
-            box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
+            padding: 10px 0;
+            border-top: 1px solid rgba(255,255,255,0.1);
         }
         .nav-item {
             background: none;
             border: none;
             color: var(--hint-color);
-            font-size: 13px;
+            font-size: 12px;
             cursor: pointer;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 4px;
         }
         .nav-item.active {
             color: var(--accent);
-            font-weight: bold;
         }
         .tab-content {
             display: none;
@@ -80,36 +76,31 @@
             display: flex;
         }
         .btn {
-            background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+            background: var(--accent);
             color: #ffffff;
             border: none;
-            padding: 14px 20px;
-            border-radius: 12px;
+            padding: 12px 20px;
+            border-radius: 8px;
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
             width: 100%;
             margin-top: 12px;
-            box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
-            transition: transform 0.1s ease;
-        }
-        .btn:active {
-            transform: scale(0.98);
         }
         .card {
             background: var(--card-bg);
-            padding: 20px;
-            border-radius: 16px;
+            padding: 16px;
+            border-radius: 12px;
             width: 100%;
             box-sizing: border-box;
-            margin-bottom: 16px;
+            margin-bottom: 12px;
             text-align: center;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
-        h2 {
-            margin-top: 0;
-            font-size: 22px;
-            margin-bottom: 16px;
+        .leader-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
         }
     </style>
 </head>
@@ -122,28 +113,28 @@
 
     <!-- КОЛЕСО -->
     <div id="tab-wheel" class="tab-content active">
-        <h2>Wheel of Fortune</h2>
+        <h2>Content Wheel</h2>
         <div class="card">
-            <p>Spin the wheel to get exclusive content rewards!</p>
-            <button class="btn" onclick="spinWheel()">Spin Wheel (1 Spin)</button>
+            <p>Spin the wheel to get exclusive content!</p>
+            <button class="btn" onclick="spinWheel()">Spin (1 Spin)</button>
         </div>
-        <div id="prize-result" style="margin-top: 10px; text-align:center;"></div>
+        <div id="prize-result" style="margin-top: 15px; text-align:center;"></div>
     </div>
 
     <!-- МАГАЗИН -->
     <div id="tab-shop" class="tab-content">
         <h2>Spin & VIP Shop</h2>
         <div class="card">
-            <h3>👑 VIP Packages</h3>
-            <button class="btn" onclick="buyPackage('vip_7')">VIP 7 Days — 90 Stars</button>
-            <button class="btn" onclick="buyPackage('vip_30')">VIP 30 Days — 190 Stars</button>
+            <h3>VIP Packages</h3>
+            <button class="btn" onclick="buyPackage('vip_7')">👑 VIP 7 Days — 90 Stars</button>
+            <button class="btn" onclick="buyPackage('vip_30')">👑 VIP 30 Days — 190 Stars</button>
         </div>
         <div class="card">
-            <h3>⭐ Spins Packs</h3>
-            <button class="btn" onclick="buyPackage('spins_1')">1 Spin — 45 Stars</button>
-            <button class="btn" onclick="buyPackage('spins_3')">3 Spins — 140 Stars</button>
-            <button class="btn" onclick="buyPackage('spins_5')">5 Spins — 190 Stars</button>
-            <button class="btn" onclick="buyPackage('spins_10')">10 Spins — 350 Stars</button>
+            <h3>Spins Packs</h3>
+            <button class="btn" onclick="buyPackage('spins_1')">⭐ 1 Spin — 45 Stars</button>
+            <button class="btn" onclick="buyPackage('spins_3')">⭐ 3 Spins — 140 Stars</button>
+            <button class="btn" onclick="buyPackage('spins_5')">⭐ 5 Spins — 190 Stars</button>
+            <button class="btn" onclick="buyPackage('spins_10')">⭐ 10 Spins — 350 Stars</button>
         </div>
     </div>
 
@@ -152,23 +143,31 @@
         <h2>Mini Games</h2>
         <div class="card">
             <h3>🪙 Coinflip</h3>
-            <p>Cost: 10 Stars. Test your luck!</p>
+            <p>Cost: 10 Stars. Try your luck to win a Spin or VIP Status!</p>
             <button class="btn" onclick="playArcade()">Play Coinflip (10 ⭐)</button>
         </div>
         <div class="card">
             <h3>🎲 Dice Roll</h3>
-            <p>Cost: 10 Stars. Roll to win VIP or Spins!</p>
+            <p>Cost: 10 Stars. Roll the dice to win rewards!</p>
             <button class="btn" onclick="playArcade()">Roll Dice (10 ⭐)</button>
         </div>
-        <div id="game-result" style="margin-top: 10px; text-align:center;"></div>
+        <div id="game-result" style="margin-top: 15px; text-align:center;"></div>
     </div>
 
     <!-- БОНУСЫ -->
     <div id="tab-bonuses" class="tab-content">
         <h2>Daily Bonuses</h2>
         <div class="card">
-            <p>Claim your daily free reward every 24 hours (or 12h for VIPs)!</p>
-            <button class="btn" onclick="claimDaily()">Claim Free Spin</button>
+            <p>Claim your free daily spin!</p>
+            <button class="btn" onclick="claimDaily()">Claim Daily Spin</button>
+        </div>
+    </div>
+
+    <!-- ЛИДЕРЫ С СКРЫТЫМИ ID -->
+    <div id="tab-top" class="tab-content">
+        <h2>Leaderboard</h2>
+        <div class="card" id="leaderboard-list">
+            <p>Loading leaders...</p>
         </div>
     </div>
 
@@ -182,11 +181,12 @@
 
     <!-- НАВИГАЦИЯ -->
     <div class="nav">
-        <button class="nav-item active" onclick="switchTab('wheel', this)">🎡 Wheel</button>
-        <button class="nav-item" onclick="switchTab('shop', this)">🛍 Shop</button>
-        <button class="nav-item" onclick="switchTab('games', this)">🎮 Games</button>
-        <button class="nav-item" onclick="switchTab('bonuses', this)">🎁 Bonuses</button>
-        <button class="nav-item" onclick="switchTab('profile', this)">👤 Profile</button>
+        <button class="nav-item active" onclick="switchTab('wheel', this)">Wheel</button>
+        <button class="nav-item" onclick="switchTab('shop', this)">Shop</button>
+        <button class="nav-item" onclick="switchTab('games', this)">Games</button>
+        <button class="nav-item" onclick="switchTab('bonuses', this)">Bonuses</button>
+        <button class="nav-item" onclick="switchTab('top', this)">Top</button>
+        <button class="nav-item" onclick="switchTab('profile', this)">Profile</button>
     </div>
 
     <script>
@@ -208,6 +208,7 @@
             document.getElementById('tab-' + tabName).classList.add('active');
             element.classList.add('active');
             if(tabName === 'profile') loadProfile();
+            if(tabName === 'top') loadLeaderboard();
         }
 
         async function loadProfile() {
@@ -222,6 +223,29 @@
                     <p><b>Balance:</b> ${data.balance} spins</p>
                     <p><b>VIP Status:</b> ${data.vip_active ? 'Active 👑 (Until ' + data.vip_until + ')' : 'Inactive'}</p>
                 `;
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function loadLeaderboard() {
+            try {
+                let res = await fetch(`${BACKEND_URL}/api/leaderboard`);
+                let data = await res.json();
+                let html = "";
+                data.leaders.forEach(l => {
+                    // Скрываем ID, оставляя только последние 4 цифры
+                    let idStr = String(l.name.replace('User_', ''));
+                    let maskedId = idStr.length > 4 ? '***' + idStr.slice(-4) : '***' + idStr;
+                    
+                    html += `
+                        <div class="leader-item">
+                            <span>#${l.rank} ID ${maskedId}</span>
+                            <b>${l.points} pts</b>
+                        </div>
+                    `;
+                });
+                document.getElementById('leaderboard-list').innerHTML = html || "<p>No data yet</p>";
             } catch (e) {
                 console.error(e);
             }

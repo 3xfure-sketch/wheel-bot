@@ -81,7 +81,7 @@
             border-radius: 12px; padding: 15px; margin-bottom: 10px; text-align: center;
         }
 
-        /* BOTTOM NAV (5 элементов без Bonuses) */
+        /* BOTTOM NAV */
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; right: 0;
             background: #12151c; border-top: 1px solid #1e2330;
@@ -137,8 +137,15 @@
 
     <!-- 3. GAMES TAB -->
     <div id="tab-games" class="tab-screen">
-        <div class="main-title">Mini Games</div>
-        <div class="info-card">🎮 Mini games coming soon!</div>
+        <div class="main-title">Mini Games (10 ⭐)</div>
+        <div class="info-card" style="margin-bottom: 15px;">
+            🎲 <b>Coin Flip & Dice</b><br>
+            Try your luck and win a <b>+1 Spin</b> or <b>VIP for 1 Day</b>!
+        </div>
+        <div class="section-container">
+            <button class="stars-pack-btn" onclick="playGame('coin')">🪙 Play Coin Flip (10 ⭐)</button>
+            <button class="stars-pack-btn" onclick="playGame('dice')">🎲 Play Dice Roll (10 ⭐)</button>
+        </div>
     </div>
 
     <!-- 4. TOP TAB -->
@@ -157,7 +164,7 @@
         </div>
     </div>
 
-    <!-- BOTTOM NAV (Без вкладки Bonuses) -->
+    <!-- BOTTOM NAV -->
     <div class="bottom-nav">
         <div class="nav-item active" onclick="switchTab('wheel', this)"><span class="nav-icon">🎡</span><span>Wheel</span></div>
         <div class="nav-item" onclick="switchTab('shop', this)"><span class="nav-icon">🛍️</span><span>Shop</span></div>
@@ -201,7 +208,6 @@
 
         function startCountdown() {
             if (timerInterval) clearInterval(timerInterval);
-            
             const btn = document.getElementById('spin-btn');
             const timerDisplay = document.getElementById('timer-display');
 
@@ -242,19 +248,19 @@
                 });
                 const res = await response.json();
                 if (res.success) {
-                    tg?.showAlert(`🎉 Вы выиграли: ${res.prize}!`);
+                    tg?.showAlert(`🎉 You won: ${res.prize}!`);
                     loadUserData();
                 } else {
-                    tg?.showAlert(res.message || "Недостаточно спинов!");
+                    tg?.showAlert(res.message || "No spins available!");
                 }
             } catch (err) {
-                tg?.showAlert("Ошибка прокрутки.");
+                tg?.showAlert("Spin error.");
             }
         }
 
         async function buySpinsPackage(spinsAmount, starsPrice) {
             const userId = tg?.initDataUnsafe?.user?.id;
-            if (!userId) return alert("Telegram ID не найден.");
+            if (!userId) return alert("Telegram ID not found.");
 
             try {
                 const response = await fetch(`${BACKEND_URL}/create-stars-invoice`, {
@@ -266,7 +272,7 @@
                 if (data.invoice_link) {
                     tg.openInvoice(data.invoice_link, (status) => {
                         if (status === 'paid') {
-                            tg.showAlert(`🎉 +${spinsAmount} спинов зачислено!`);
+                            tg.showAlert(`🎉 +${spinsAmount} spins added!`);
                             loadUserData();
                         }
                     });
@@ -276,7 +282,7 @@
 
         async function buyVIP(days, price) {
             const userId = tg?.initDataUnsafe?.user?.id;
-            if (!userId) return alert("Telegram ID не найден.");
+            if (!userId) return alert("Telegram ID not found.");
 
             try {
                 const response = await fetch(`${BACKEND_URL}/create-vip-invoice`, {
@@ -288,12 +294,49 @@
                 if (data.invoice_link) {
                     tg.openInvoice(data.invoice_link, (status) => {
                         if (status === 'paid') {
-                            tg.showAlert(`👑 VIP-статус на ${days} дней активирован!`);
+                            tg.showAlert(`👑 VIP status activated for ${days} days!`);
                             loadUserData();
                         }
                     });
                 }
             } catch (err) { console.error(err); }
+        }
+
+        async function playGame(gameType) {
+            const userId = tg?.initDataUnsafe?.user?.id;
+            if (!userId) return alert("Telegram ID not found.");
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/create-game-invoice`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId, game_type: gameType, stars_price: 10 })
+                });
+                const data = await response.json();
+                
+                if (data.invoice_link) {
+                    tg.openInvoice(data.invoice_link, async (status) => {
+                        if (status === 'paid') {
+                            const resFetch = await fetch(`${BACKEND_URL}/play-game`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ user_id: userId, game_type: gameType })
+                            });
+                            const gameResult = await resFetch.json();
+                            
+                            if (gameResult.won) {
+                                tg?.showAlert(`🎉 CONGRATULATIONS! You won: ${gameResult.prize_name}!`);
+                            } else {
+                                tg?.showAlert(`😢 You lost! Better luck next time.`);
+                            }
+                            loadUserData();
+                        }
+                    });
+                }
+            } catch (err) {
+                console.error(err);
+                tg?.showAlert("Error starting the game.");
+            }
         }
 
         loadUserData();

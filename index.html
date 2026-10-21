@@ -126,7 +126,7 @@
             transform: scale(0.98);
         }
 
-        /* Раздел VIP */
+        /* Раздел Spins Packs */
         .section-container {
             width: 100%;
             display: flex;
@@ -135,19 +135,6 @@
             margin-bottom: 20px;
         }
 
-        .vip-btn {
-            width: 100%;
-            background: linear-gradient(180deg, #ff4d3d 0%, #e63020 100%);
-            color: #ffffff;
-            border: none;
-            border-radius: 12px;
-            padding: 12px;
-            font-size: 15px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        /* Раздел Spins Packs */
         .spins-packs-title {
             color: #ffffff;
             font-size: 16px;
@@ -167,10 +154,9 @@
             font-weight: bold;
             cursor: pointer;
             box-shadow: 0 4px 12px rgba(230, 48, 32, 0.3);
-            margin-bottom: 8px;
         }
 
-        .stars-pack-btn:active, .vip-btn:active {
+        .stars-pack-btn:active {
             transform: scale(0.98);
         }
 
@@ -244,13 +230,7 @@
     <!-- 5. Главная кнопка вращения -->
     <button id="spin-btn" class="spin-button" onclick="spinWheel()">Spin Wheel (1 Spin)</button>
 
-    <!-- 6. Раздел VIP Подписок -->
-    <div class="section-container">
-        <button class="vip-btn" onclick="buyVIP(7, 90)">🎟️ VIP 7 Days — 90 Stars</button>
-        <button class="vip-btn" onclick="buyVIP(30, 190)">🎟️ VIP 30 Days — 190 Stars</button>
-    </div>
-
-    <!-- 7. Пакеты спинов (Spins Packs) -->
+    <!-- 6. Пакеты спинов (Spins Packs) -->
     <div class="spins-packs-title">★ Spins Packs</div>
     <div class="section-container">
         <button class="stars-pack-btn" onclick="buySpinsPackage(1, 45)">
@@ -267,7 +247,7 @@
         </button>
     </div>
 
-    <!-- 8. Нижняя навигация -->
+    <!-- 7. Нижняя навигация -->
     <div class="bottom-nav">
         <div class="nav-item active">
             <span class="nav-icon">🎡</span>
@@ -348,10 +328,6 @@
             } catch (err) {
                 console.error(err);
             }
-        }
-
-        function buyVIP(days, price) {
-            tg?.showAlert(`Покупка VIP на ${days} дней за ${price} Stars`);
         }
 
         loadUserData();

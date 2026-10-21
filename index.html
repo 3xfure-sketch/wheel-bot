@@ -9,13 +9,17 @@
         body {
             background-color: #12141c; color: #ffffff;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            margin: 0; padding: 12px; text-align: center; overflow-x: hidden;
+            margin: 0; padding: 10px 10px 70px 10px; text-align: center; overflow-x: hidden;
         }
         .header {
             display: flex; justify-content: space-between; align-items: center;
-            background: #1e2230; padding: 10px 15px; border-radius: 12px; margin-bottom: 15px; font-size: 14px;
+            background: #1e2230; padding: 10px 15px; border-radius: 12px; margin-bottom: 10px; font-size: 14px;
         }
         .balance-badge { background: #2b3145; padding: 6px 12px; border-radius: 20px; font-weight: bold; color: #ffd700; }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
         .roulette-wrapper {
             position: relative; width: 100%; height: 140px; background: #151824;
             border: 2px solid #2b3145; border-radius: 14px; overflow: hidden; margin: 15px 0;
@@ -36,15 +40,29 @@
             border-bottom: 4px solid #4b69ff; box-sizing: border-box; padding: 5px;
         }
         .case-item .item-title { font-size: 11px; font-weight: 600; color: #ddd; max-width: 90px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .btn-spin {
+        
+        .btn-action {
             background: linear-gradient(135deg, #ff4757, #ff6b81); color: white; border: none;
-            width: 100%; padding: 16px; font-size: 18px; font-weight: bold; border-radius: 12px; cursor: pointer;
-            box-shadow: 0 4px 15px rgba(255, 71, 87, 0.4);
+            width: 100%; padding: 14px; font-size: 16px; font-weight: bold; border-radius: 12px; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255, 71, 87, 0.4); margin-top: 10px;
         }
-        .btn-spin:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-action:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .card { background: #1e2230; padding: 15px; border-radius: 12px; margin-bottom: 12px; border: 1px solid #2b3145; text-align: left; }
+        .card h3 { margin-top: 0; color: #ffd700; font-size: 16px; }
+        input { width: calc(100% - 20px); padding: 10px; border-radius: 8px; border: 1px solid #4b69ff; background: #12141c; color: #fff; margin-bottom: 10px; }
+
+        .nav-bar {
+            position: fixed; bottom: 0; left: 0; width: 100%; background: #151824;
+            display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid #2b3145; z-index: 1000;
+        }
+        .nav-item { background: none; border: none; color: #888; font-size: 11px; cursor: pointer; display: flex; flex-direction: column; align-items: center; }
+        .nav-item.active { color: #ff4757; font-weight: bold; }
+        .nav-item span { font-size: 18px; margin-bottom: 2px; }
+
         .prize-modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); z-index: 100; flex-direction: column; justify-content: center; align-items: center; padding: 20px;
+            background: rgba(0,0,0,0.85); z-index: 2000; flex-direction: column; justify-content: center; align-items: center; padding: 20px;
         }
         .prize-box { background: #1e2230; padding: 25px; border-radius: 16px; border: 2px solid #ffd700; text-align: center; max-width: 300px; }
     </style>
@@ -55,46 +73,103 @@
         <div class="balance-badge">⭐ <span id="balance">0</span> spins</div>
     </div>
 
-    <h3>🎁 Content Wheel</h3>
-
-    <div class="roulette-wrapper" id="roulette-wrapper">
-        <div class="pointer"></div>
-        <div class="tape" id="tape"></div>
+    <!-- Вкладка 1: Рулетка -->
+    <div id="tab-wheel" class="tab-content active">
+        <h3>🎁 Content Wheel</h3>
+        <div class="roulette-wrapper" id="roulette-wrapper">
+            <div class="pointer"></div>
+            <div class="tape" id="tape"></div>
+        </div>
+        <button class="btn-action" id="spin-btn" onclick="startSpin()">🚀 SPIN WHEEL</button>
     </div>
 
-    <button class="btn-spin" id="spin-btn" onclick="startSpin()">🚀 SPIN WHEEL</button>
+    <!-- Вкладка 2: Магазин -->
+    <div id="tab-shop" class="tab-content">
+        <h3>🛍️ Spin Shop (Telegram Stars)</h3>
+        <div class="card" style="text-align: center;">
+            <p>Select a spin package:</p>
+            <button class="btn-action" onclick="buySpins(1, 45)">⭐ 1 Spin — 45 Stars</button>
+            <button class="btn-action" onclick="buySpins(3, 140)">⭐ 3 Spins — 140 Stars</button>
+            <button class="btn-action" onclick="buySpins(5, 190)">⭐ 5 Spins — 190 Stars</button>
+            <button class="btn-action" onclick="buySpins(10, 350)">⭐ 10 Spins — 350 Stars</button>
+        </div>
+    </div>
 
+    <!-- Вкладка 3: Бонусы и Промо -->
+    <div id="tab-bonuses" class="tab-content">
+        <h3>🎁 Bonuses & Promo</h3>
+        <div class="card">
+            <h3>⏰ Daily Bonus</h3>
+            <p style="font-size: 13px; color: #aaa;">Claim 1 free spin every 24 hours.</p>
+            <button class="btn-action" onclick="claimDaily()">Claim Daily Spin</button>
+        </div>
+        <div class="card">
+            <h3>🎟️ Promo Code</h3>
+            <input type="text" id="promo-input" placeholder="Enter promo code (e.g. START)">
+            <button class="btn-action" style="padding: 10px;" onclick="activatePromo()">Activate</button>
+        </div>
+    </div>
+
+    <!-- Вкладка 4: Профиль и Рефералы -->
+    <div id="tab-profile" class="tab-content">
+        <h3>👤 Profile & Referrals</h3>
+        <div class="card">
+            <h3>👥 Referral Link</h3>
+            <p style="font-size: 13px; color: #aaa;">Invite friends and get +2 spins for each!</p>
+            <input type="text" id="ref-link" readonly onclick="this.select()">
+            <button class="btn-action" style="padding: 10px;" onclick="copyRef()">Copy Link</button>
+        </div>
+    </div>
+
+    <!-- Модальное окно выигрыша -->
     <div class="prize-modal" id="prize-modal">
         <div class="prize-box">
             <h2 style="color: #ffd700; margin-top:0;">🎉 YOU WON!</h2>
             <p id="prize-title" style="font-size: 16px; margin: 15px 0;"></p>
-            <p style="font-size: 12px; color: #aaa;">Prize delivered to your Telegram chat!</p>
-            <button class="btn-spin" style="background: #2481cc;" onclick="closeModal()">CLAIM</button>
+            <p style="font-size: 12px; color: #aaa;">Sent to your Telegram chat (blurred & auto-deletes in 7 days)!</p>
+            <button class="btn-action" style="background: #2481cc; margin-top:0;" onclick="closeModal()">OK</button>
         </div>
+    </div>
+
+    <!-- Нижняя панель навигации -->
+    <div class="nav-bar">
+        <button class="nav-item active" onclick="switchTab('wheel', this)"><span>🎰</span>Wheel</button>
+        <button class="nav-item" onclick="switchTab('shop', this)"><span>🛍️</span>Shop</button>
+        <button class="nav-item" onclick="switchTab('bonuses', this)"><span>🎁</span>Bonuses</button>
+        <button class="nav-item" onclick="switchTab('profile', this)"><span>👤</span>Profile</button>
     </div>
 
     <script>
         const BACKEND_URL = "https://stiffly-degrading-dimly.ngrok-free.dev";
-
         const tg = window.Telegram.WebApp;
         tg.expand();
         let dbItems = [];
         let isSpinning = false;
         const TAPE_ITEMS_COUNT = 70;
 
-        fetch(`${BACKEND_URL}/api/profile`, { 
-            headers: { 'Authorization': tg.initData } 
-        })
-        .then(r => r.json())
-        .then(d => {
-            document.getElementById('user-id').innerText = d.user_id;
-            document.getElementById('balance').innerText = d.balance;
-        }).catch(err => console.error("Profile error:", err));
+        function loadProfile() {
+            fetch(`${BACKEND_URL}/api/profile`, { headers: { 'Authorization': tg.initData } })
+            .then(r => r.json())
+            .then(d => {
+                document.getElementById('user-id').innerText = d.user_id;
+                document.getElementById('balance').innerText = d.balance;
+                document.getElementById('ref-link').value = `https://t.me/bottttlospollosbot?start=${d.user_id}`;
+            }).catch(err => console.error("Profile error:", err));
+        }
+
+        loadProfile();
 
         fetch(`${BACKEND_URL}/api/content_items`)
             .then(r => r.json())
             .then(d => { dbItems = d.items; buildTape(null); })
             .catch(err => console.error("Content error:", err));
+
+        function switchTab(tabName, btn) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + tabName).classList.add('active');
+            btn.classList.add('active');
+        }
 
         function buildTape(winningItemId) {
             const tape = document.getElementById('tape');
@@ -162,11 +237,72 @@
             })
             .catch(err => {
                 isSpinning = false;
-                document.getElementById('spin-btn'].disabled = false;
+                document.getElementById('spin-btn').disabled = false;
                 tg.showAlert("Server connection error!");
             });
         }
-        function closeModal() { document.getElementById('prize-modal').style.display = 'none'; }
+
+        function buySpins(spins, stars) {
+            fetch(`${BACKEND_URL}/api/create_invoice`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': tg.initData },
+                body: JSON.stringify({ spins: spins, stars: stars })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success && data.invoice_link) {
+                    tg.openInvoice(data.invoice_link, (status) => {
+                        if (status === 'paid') {
+                            tg.showAlert("Payment successful!");
+                            loadProfile();
+                        }
+                    });
+                } else {
+                    tg.showAlert(data.message || "Invoice error");
+                }
+            });
+        }
+
+        function claimDaily() {
+            fetch(`${BACKEND_URL}/api/daily`, { method: 'POST', headers: { 'Authorization': tg.initData } })
+            .then(r => r.json())
+            .then(data => {
+                tg.showAlert(data.message);
+                if (data.success) {
+                    document.getElementById('balance').innerText = data.balance;
+                }
+            });
+        }
+
+        function activatePromo() {
+            let code = document.getElementById('promo-input').value;
+            if (!code) return;
+            fetch(`${BACKEND_URL}/api/promo`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': tg.initData },
+                body: JSON.stringify({ code: code })
+            })
+            .then(r => r.json())
+            .then(data => {
+                tg.showAlert(data.message);
+                if (data.success) {
+                    document.getElementById('balance').innerText = data.balance;
+                    document.getElementById('promo-input').value = '';
+                }
+            });
+        }
+
+        function copyRef() {
+            let copyText = document.getElementById("ref-link");
+            copyText.select();
+            navigator.clipboard.writeText(copyText.value);
+            tg.showAlert("Referral link copied to clipboard!");
+        }
+
+        function closeModal() { 
+            document.getElementById('prize-modal').style.display = 'none'; 
+            loadProfile();
+        }
     </script>
 </body>
 </html>

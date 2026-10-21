@@ -1,22 +1,187 @@
-<!-- Кнопка вращения -->
-<button id="spin-btn" class="spin-button" onclick="spinWheel()">Spin Wheel (1 Spin)</button>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Wheel</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            background-color: #0f0f11;
+            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
 
-<!-- БЛОК ПОКУПКИ СПИНОВ (Под кнопкой) -->
-<div class="buy-spins-container">
-    <div class="buy-spins-title">Get More Spins</div>
-    <div class="spins-cards-grid">
-        <div class="spin-card" onclick="buySpinsPackage(1, 15)">
-            <div class="spin-card-count">+1 Spin</div>
-            <div class="spin-card-price">⭐ 15</div>
-        </div>
-        <div class="spin-card popular" onclick="buySpinsPackage(5, 50)">
-            <div class="popular-badge">POPULAR</div>
-            <div class="spin-card-count">+5 Spins</div>
-            <div class="spin-card-price">⭐ 50</div>
-        </div>
-        <div class="spin-card" onclick="buySpinsPackage(10, 90)">
-            <div class="spin-card-count">+10 Spins</div>
-            <div class="spin-card-price">⭐ 90</div>
-        </div>
+        .top-bar {
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            font-size: 15px;
+            font-weight: bold;
+        }
+
+        .spin-button {
+            width: 100%;
+            max-width: 400px;
+            background: #ff3b30;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255, 59, 48, 0.4);
+            margin-bottom: 15px;
+        }
+
+        /* Блок пакетов спинов по твоему макету */
+        .spins-packs-container {
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .spins-packs-title {
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+
+        .stars-pack-btn {
+            width: 100%;
+            background: linear-gradient(180deg, #ff5e43 0%, #e63920 100%);
+            color: #ffffff;
+            border: none;
+            border-radius: 12px;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(230, 57, 32, 0.3);
+            transition: transform 0.1s ease, opacity 0.2s ease;
+        }
+
+        .stars-pack-btn:active {
+            transform: scale(0.97);
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Верхняя панель с ID и балансом -->
+    <div class="top-bar">
+        <div id="user-id">ID: ...</div>
+        <div id="spins-counter">⭐ <span id="spins-count">0</span> spins</div>
     </div>
-</div>
+
+    <!-- Основная кнопка рулетки -->
+    <button id="spin-btn" class="spin-button" onclick="spinWheel()">Spin Wheel (1 Spin)</button>
+
+    <!-- ПАКЕТЫ СПИНОВ (Точные цены с макета) -->
+    <div class="spins-packs-container">
+        <div class="spins-packs-title">★ Spins Packs</div>
+        
+        <button class="stars-pack-btn" onclick="buySpinsPackage(1, 45)">
+            🎰 1 Spin — 45 Stars
+        </button>
+        
+        <button class="stars-pack-btn" onclick="buySpinsPackage(3, 140)">
+            🎰 3 Spins — 140 Stars
+        </button>
+        
+        <button class="stars-pack-btn" onclick="buySpinsPackage(5, 190)">
+            🎰 5 Spins — 190 Stars
+        </button>
+        
+        <button class="stars-pack-btn" onclick="buySpinsPackage(10, 350)">
+            🎰 10 Spins — 350 Stars
+        </button>
+    </div>
+
+    <script>
+        // Укажи адрес твоего сервера и порта (для теста на сервере: http://2.56.119.39:8001)
+        const BACKEND_URL = "http://2.56.119.39:8001";
+
+        const tg = window.Telegram?.WebApp;
+        if (tg) {
+            tg.expand();
+        }
+
+        // Загрузка данных пользователя при открытии
+        async function loadUserData() {
+            const userId = tg?.initDataUnsafe?.user?.id || 123456789; // Тестовый ID, если запуск не из Telegram
+            document.getElementById('user-id').innerText = `ID: ${userId}`;
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/user/${userId}`);
+                const data = await response.json();
+                if (data && data.spins !== undefined) {
+                    document.getElementById('spins-count').innerText = data.spins;
+                }
+            } catch (e) {
+                console.error("Ошибка загрузки данных пользователя:", e);
+            }
+        }
+
+        // Функция вращения колеса
+        function spinWheel() {
+            tg?.showAlert("Вращаем рулетку!");
+        }
+
+        // Покупка пакета спинов за Telegram Stars
+        async function buySpinsPackage(spinsAmount, starsPrice) {
+            const userId = tg?.initDataUnsafe?.user?.id;
+
+            if (!userId) {
+                alert("Ошибка: Telegram ID не определен. Откройте приложение внутри Telegram.");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/create-stars-invoice`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        user_id: userId,
+                        spins_amount: spinsAmount,
+                        stars_price: starsPrice 
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.invoice_link) {
+                    tg.openInvoice(data.invoice_link, (status) => {
+                        if (status === 'paid') {
+                            tg.showAlert(`🎉 Поздравляем! +${spinsAmount} спинов зачислено!`);
+                            loadUserData(); // Обновляем баланс на экране
+                        }
+                    });
+                } else {
+                    tg.showAlert("Ошибка генерации инвойса");
+                }
+            } catch (err) {
+                console.error("Ошибка сети:", err);
+                tg.showAlert("Не удалось связаться с сервером оплаты.");
+            }
+        }
+
+        loadUserData();
+    </script>
+</body>
+</html>

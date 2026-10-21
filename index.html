@@ -147,8 +147,15 @@
         let isSpinning = false;
         const TAPE_ITEMS_COUNT = 70;
 
+        // Заголовки для обхода предупреждения ngrok
+        const fetchHeaders = {
+            'Authorization': tg.initData || '',
+            'ngrok-skip-browser-warning': 'true',
+            'Content-Type': 'application/json'
+        };
+
         function loadProfile() {
-            fetch(`${BACKEND_URL}/api/profile`, { headers: { 'Authorization': tg.initData } })
+            fetch(`${BACKEND_URL}/api/profile`, { headers: fetchHeaders })
             .then(r => r.json())
             .then(d => {
                 document.getElementById('user-id').innerText = d.user_id;
@@ -159,7 +166,7 @@
 
         loadProfile();
 
-        fetch(`${BACKEND_URL}/api/content_items`)
+        fetch(`${BACKEND_URL}/api/content_items`, { headers: { 'ngrok-skip-browser-warning': 'true' } })
             .then(r => r.json())
             .then(d => { dbItems = d.items; buildTape(null); })
             .catch(err => console.error("Content error:", err));
@@ -194,7 +201,7 @@
 
             fetch(`${BACKEND_URL}/api/spin`, { 
                 method: 'POST', 
-                headers: { 'Authorization': tg.initData } 
+                headers: fetchHeaders 
             })
             .then(r => r.json())
             .then(data => {
@@ -245,7 +252,7 @@
         function buySpins(spins, stars) {
             fetch(`${BACKEND_URL}/api/create_invoice`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': tg.initData },
+                headers: fetchHeaders,
                 body: JSON.stringify({ spins: spins, stars: stars })
             })
             .then(r => r.json())
@@ -264,7 +271,7 @@
         }
 
         function claimDaily() {
-            fetch(`${BACKEND_URL}/api/daily`, { method: 'POST', headers: { 'Authorization': tg.initData } })
+            fetch(`${BACKEND_URL}/api/daily`, { method: 'POST', headers: fetchHeaders })
             .then(r => r.json())
             .then(data => {
                 tg.showAlert(data.message);
@@ -279,7 +286,7 @@
             if (!code) return;
             fetch(`${BACKEND_URL}/api/promo`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': tg.initData },
+                headers: fetchHeaders,
                 body: JSON.stringify({ code: code })
             })
             .then(r => r.json())

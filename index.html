@@ -43,7 +43,6 @@
             margin-bottom: 15px;
         }
 
-        /* Блок пакетов спинов по твоему макету */
         .spins-packs-container {
             width: 100%;
             max-width: 400px;
@@ -83,16 +82,13 @@
 </head>
 <body>
 
-    <!-- Верхняя панель с ID и балансом -->
     <div class="top-bar">
         <div id="user-id">ID: ...</div>
         <div id="spins-counter">⭐ <span id="spins-count">0</span> spins</div>
     </div>
 
-    <!-- Основная кнопка рулетки -->
     <button id="spin-btn" class="spin-button" onclick="spinWheel()">Spin Wheel (1 Spin)</button>
 
-    <!-- ПАКЕТЫ СПИНОВ (Точные цены с макета) -->
     <div class="spins-packs-container">
         <div class="spins-packs-title">★ Spins Packs</div>
         
@@ -114,7 +110,6 @@
     </div>
 
     <script>
-        // Укажи адрес твоего сервера и порта (для теста на сервере: http://2.56.119.39:8001)
         const BACKEND_URL = "http://2.56.119.39:8001";
 
         const tg = window.Telegram?.WebApp;
@@ -122,9 +117,8 @@
             tg.expand();
         }
 
-        // Загрузка данных пользователя при открытии
         async function loadUserData() {
-            const userId = tg?.initDataUnsafe?.user?.id || 123456789; // Тестовый ID, если запуск не из Telegram
+            const userId = tg?.initDataUnsafe?.user?.id || 123456789;
             document.getElementById('user-id').innerText = `ID: ${userId}`;
 
             try {
@@ -138,17 +132,15 @@
             }
         }
 
-        // Функция вращения колеса
         function spinWheel() {
             tg?.showAlert("Вращаем рулетку!");
         }
 
-        // Покупка пакета спинов за Telegram Stars
         async function buySpinsPackage(spinsAmount, starsPrice) {
             const userId = tg?.initDataUnsafe?.user?.id;
 
             if (!userId) {
-                alert("Ошибка: Telegram ID не определен. Откройте приложение внутри Telegram.");
+                alert("Ошибка: Telegram ID не определен.");
                 return;
             }
 
@@ -169,7 +161,7 @@
                     tg.openInvoice(data.invoice_link, (status) => {
                         if (status === 'paid') {
                             tg.showAlert(`🎉 Поздравляем! +${spinsAmount} спинов зачислено!`);
-                            loadUserData(); // Обновляем баланс на экране
+                            loadUserData();
                         }
                     });
                 } else {

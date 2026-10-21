@@ -249,27 +249,27 @@
 
     <!-- 7. Нижняя навигация -->
     <div class="bottom-nav">
-        <div class="nav-item active">
+        <div class="nav-item active" data-tab="wheel">
             <span class="nav-icon">🎡</span>
             <span>Wheel</span>
         </div>
-        <div class="nav-item">
+        <div class="nav-item" data-tab="shop">
             <span class="nav-icon">🛍️</span>
             <span>Shop</span>
         </div>
-        <div class="nav-item">
+        <div class="nav-item" data-tab="games">
             <span class="nav-icon">🎮</span>
             <span>Games</span>
         </div>
-        <div class="nav-item">
+        <div class="nav-item" data-tab="bonuses">
             <span class="nav-icon">🎁</span>
             <span>Bonuses</span>
         </div>
-        <div class="nav-item">
+        <div class="nav-item" data-tab="top">
             <span class="nav-icon">🏆</span>
             <span>Top</span>
         </div>
-        <div class="nav-item">
+        <div class="nav-item" data-tab="profile">
             <span class="nav-icon">👤</span>
             <span>Profile</span>
         </div>
@@ -329,6 +329,19 @@
                 console.error(err);
             }
         }
+
+        // Логика работы нижнего меню
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+                
+                const tabName = this.getAttribute('data-tab');
+                if (tabName !== 'wheel') {
+                    tg?.showAlert(`Раздел ${tabName.toUpperCase()} откроется в следующем обновлении!`);
+                }
+            });
+        });
 
         loadUserData();
     </script>

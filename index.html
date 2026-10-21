@@ -41,6 +41,7 @@
             color: var(--gold);
             font-weight: bold;
         }
+        /* Исправленное компактное нижнее меню без наложений */
         .nav {
             position: fixed;
             bottom: 0;
@@ -49,21 +50,26 @@
             background: var(--card-bg);
             display: flex;
             justify-content: space-around;
-            padding: 10px 4px;
+            padding: 8px 2px;
             border-top: 1px solid rgba(255,255,255,0.1);
             box-sizing: border-box;
+            z-index: 100;
         }
         .nav-item {
             background: none;
             border: none;
             color: var(--hint-color);
-            font-size: 13px;
+            font-size: 11px;
             font-weight: 600;
             cursor: pointer;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 3px;
+            gap: 2px;
+            flex: 1;
+        }
+        .nav-item span {
+            font-size: 16px;
         }
         .nav-item.active {
             color: var(--accent);
@@ -172,7 +178,7 @@
             <div class="cs-wheel-container">
                 <div class="cs-pointer"></div>
                 <div class="cs-strip" id="csStrip">
-                    <!-- Заполняется скриптом с твоим контентом -->
+                    <!-- Заполняется скриптом -->
                 </div>
             </div>
             <button class="btn" id="spinBtn" onclick="spinCsWheel()">Spin Wheel (1 Spin)</button>
@@ -238,14 +244,14 @@
         </div>
     </div>
 
-    <!-- НАВИГАЦИЯ -->
+    <!-- НИЖНЯЯ НАВИГАЦИЯ (ИСПРАВЛЕНА) -->
     <div class="nav">
-        <button class="nav-item active" onclick="switchTab('wheel', this)"><span style="font-size: 18px;">🎡</span>Wheel</button>
-        <button class="nav-item" onclick="switchTab('shop', this)"><span style="font-size: 18px;">🛍️</span>Shop</button>
-        <button class="nav-item" onclick="switchTab('games', this)"><span style="font-size: 18px;">🎮</span>Games</button>
-        <button class="nav-item" onclick="switchTab('bonuses', this)"><span style="font-size: 18px;">🎁</span>Bonuses</button>
-        <button class="nav-item" onclick="switchTab('top', this)"><span style="font-size: 18px;">🏆</span>Top</button>
-        <button class="nav-item" onclick="switchTab('profile', this)"><span style="font-size: 18px;">👤</span>Profile</button>
+        <button class="nav-item active" onclick="switchTab('wheel', this)"><span>🎡</span>Wheel</button>
+        <button class="nav-item" onclick="switchTab('shop', this)"><span>🛍️</span>Shop</button>
+        <button class="nav-item" onclick="switchTab('games', this)"><span>🎮</span>Games</button>
+        <button class="nav-item" onclick="switchTab('bonuses', this)"><span>🎁</span>Bonuses</button>
+        <button class="nav-item" onclick="switchTab('top', this)"><span>🏆</span>Top</button>
+        <button class="nav-item" onclick="switchTab('profile', this)"><span>👤</span>Profile</button>
     </div>
 
     <script>
@@ -270,7 +276,6 @@
             if(tabName === 'top') loadLeaderboard();
         }
 
-        // Твой контент для рулетки (фото, видео, эксклюзив)
         const itemsPool = [
             { icon: '📸', name: 'Photo #1' },
             { icon: '🎬', name: 'Video Pack' },

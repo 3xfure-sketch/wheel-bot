@@ -43,7 +43,7 @@
         
         .btn-action {
             background: linear-gradient(135deg, #ff4757, #ff6b81); color: white; border: none;
-            width: 100%; padding: 14px; font-size: 16px; font-weight: bold; border-radius: 12px; cursor: pointer;
+            width: 100%; padding: 12px; font-size: 15px; font-weight: bold; border-radius: 12px; cursor: pointer;
             box-shadow: 0 4px 15px rgba(255, 71, 87, 0.4); margin-top: 10px;
         }
         .btn-action:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -58,11 +58,11 @@
 
         .nav-bar {
             position: fixed; bottom: 0; left: 0; width: 100%; background: #151824;
-            display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid #2b3145; z-index: 1000;
+            display: flex; justify-content: space-around; padding: 8px 0; border-top: 1px solid #2b3145; z-index: 1000;
         }
-        .nav-item { background: none; border: none; color: #888; font-size: 11px; cursor: pointer; display: flex; flex-direction: column; align-items: center; }
+        .nav-item { background: none; border: none; color: #888; font-size: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; }
         .nav-item.active { color: #ff4757; font-weight: bold; }
-        .nav-item span { font-size: 18px; margin-bottom: 2px; }
+        .nav-item span { font-size: 16px; margin-bottom: 2px; }
 
         .prize-modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -80,6 +80,9 @@
     <!-- Вкладка 1: Рулетка -->
     <div id="tab-wheel" class="tab-content active">
         <h3>🎁 Content Wheel</h3>
+        <div id="vip-status-banner" style="background: linear-gradient(135deg, #ffd700, #ff8c00); color: #000; padding: 6px; border-radius: 8px; font-weight: bold; font-size: 12px; margin-bottom: 10px; display: none;">
+            👑 VIP ACTIVE (12h cooldown & 10% discount)
+        </div>
         <div class="roulette-wrapper" id="roulette-wrapper">
             <div class="pointer"></div>
             <div class="tape" id="tape"></div>
@@ -89,41 +92,61 @@
 
     <!-- Вкладка 2: Магазин -->
     <div id="tab-shop" class="tab-content">
-        <h3>🛍️ Spin Shop (Telegram Stars)</h3>
-        <div class="card" style="text-align: center;">
-            <p>Select a spin package:</p>
-            <button class="btn-action" onclick="buySpins(1, 45)">⭐ 1 Spin — 45 Stars</button>
-            <button class="btn-action" onclick="buySpins(3, 140)">⭐ 3 Spins — 140 Stars</button>
-            <button class="btn-action" onclick="buySpins(5, 190)">⭐ 5 Spins — 190 Stars</button>
-            <button class="btn-action" onclick="buySpins(10, 350)">⭐ 10 Spins — 350 Stars</button>
+        <h3>🛍️ Spin & VIP Shop</h3>
+        <div class="card">
+            <h3>👑 VIP Packages</h3>
+            <button class="btn-action" style="background: linear-gradient(135deg, #ffd700, #ff8c00); color:#000;" onclick="buyPackage('vip_7')">👑 VIP 7 Days — 90 Stars</button>
+            <button class="btn-action" style="background: linear-gradient(135deg, #ffd700, #ff8c00); color:#000;" onclick="buyPackage('vip_30')">👑 VIP 30 Days — 190 Stars</button>
+        </div>
+        <div class="card">
+            <h3>📦 Spin Packages</h3>
+            <button class="btn-action" onclick="buyPackage('spins_1')">⭐ 1 Spin — 45 Stars</button>
+            <button class="btn-action" onclick="buyPackage('spins_3')">⭐ 3 Spins — 140 Stars</button>
+            <button class="btn-action" onclick="buyPackage('spins_5')">⭐ 5 Spins — 190 Stars</button>
+            <button class="btn-action" onclick="buyPackage('spins_10')">⭐ 10 Spins — 350 Stars</button>
         </div>
     </div>
 
-    <!-- Вкладка 3: Бонусы и Промо -->
+    <!-- Вкладка 3: Игры (Аркада) -->
+    <div id="tab-arcade" class="tab-content">
+        <h3>🎲 Mini Games</h3>
+        <div class="card">
+            <h3>🪙 Coinflip</h3>
+            <p style="font-size: 12px; color: #aaa;">Cost: 10 Stars/Spins. Try your luck to win a Spin or VIP Status!</p>
+            <button class="btn-action" onclick="playArcade('coinflip')">Play Coinflip (10 ⭐)</button>
+        </div>
+        <div class="card">
+            <h3>🎲 Dice Roll</h3>
+            <p style="font-size: 12px; color: #aaa;">Cost: 10 Stars/Spins. Roll the dice to win rewards!</p>
+            <button class="btn-action" onclick="playArcade('dice')">Roll Dice (10 ⭐)</button>
+        </div>
+    </div>
+
+    <!-- Вкладка 4: Бонусы и Промо -->
     <div id="tab-bonuses" class="tab-content">
         <h3>🎁 Bonuses & Promo</h3>
         <div class="card">
             <h3>⏰ Daily Free Spin</h3>
-            <p style="font-size: 13px; color: #aaa;" id="daily-status">Claim 1 free spin every 24 hours.</p>
+            <p style="font-size: 13px; color: #aaa;" id="daily-status">Claim your free spin regularly.</p>
             <button class="btn-action" id="daily-btn" onclick="claimDaily()">Claim Daily Spin</button>
         </div>
         <div class="card">
             <h3>🎟️ Promo Code</h3>
-            <input type="text" id="promo-input" placeholder="Enter promo code (e.g. START)">
+            <input type="text" id="promo-input" placeholder="Enter promo code">
             <button class="btn-action" style="padding: 10px;" onclick="activatePromo()">Activate</button>
         </div>
     </div>
 
-    <!-- Вкладка 4: Таблица лидеров -->
+    <!-- Вкладка 5: Таблица лидеров -->
     <div id="tab-leaderboard" class="tab-content">
         <h3>🏆 Weekly Leaderboard</h3>
-        <p style="font-size: 12px; color: #aaa; margin-top:0;">Top player gets 5 free spins every Monday!</p>
+        <p style="font-size: 12px; color: #aaa; margin-top:0;">Top player wins 5 free spins every Monday!</p>
         <div class="card" id="leaderboard-list">
             <p style="color: #aaa;">Loading rankings...</p>
         </div>
     </div>
 
-    <!-- Вкладка 5: Профиль и Рефералы -->
+    <!-- Вкладка 6: Профиль -->
     <div id="tab-profile" class="tab-content">
         <h3>👤 Profile & Referrals</h3>
         <div class="card">
@@ -148,6 +171,7 @@
     <div class="nav-bar">
         <button class="nav-item active" onclick="switchTab('wheel', this)"><span>🎰</span>Wheel</button>
         <button class="nav-item" onclick="switchTab('shop', this)"><span>🛍️</span>Shop</button>
+        <button class="nav-item" onclick="switchTab('arcade', this)"><span>🎲</span>Games</button>
         <button class="nav-item" onclick="switchTab('bonuses', this)"><span>🎁</span>Bonuses</button>
         <button class="nav-item" onclick="switchTab('leaderboard', this)"><span>🏆</span>Top</button>
         <button class="nav-item" onclick="switchTab('profile', this)"><span>👤</span>Profile</button>
@@ -160,6 +184,7 @@
         let dbItems = [];
         let isSpinning = false;
         let lastFreeSpinTime = null;
+        let vipActive = false;
         let timerInterval = null;
         const TAPE_ITEMS_COUNT = 70;
 
@@ -173,13 +198,14 @@
             if (!lastFreeSpinTime) return;
             const lastTime = new Date(lastFreeSpinTime.replace(" ", "T")).getTime();
             const now = new Date().getTime();
-            const diff = (24 * 3600 * 1000) - (now - lastTime);
+            const cooldownHours = vipActive ? 12 : 24;
+            const diff = (cooldownHours * 3600 * 1000) - (now - lastTime);
 
             const statusEl = document.getElementById('daily-status');
             const btnEl = document.getElementById('daily-btn');
 
             if (diff <= 0) {
-                statusEl.innerText = "Claim 1 free spin right now!";
+                statusEl.innerText = "Claim your free spin right now!";
                 btnEl.disabled = false;
                 btnEl.innerText = "Claim Daily Spin";
                 if (timerInterval) clearInterval(timerInterval);
@@ -189,7 +215,7 @@
                 const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
                 const seconds = Math.floor((diff % (1000 * 60)) / 1000);
                 btnEl.innerText = `⏳ Next spin in ${hours}h ${minutes}m ${seconds}s`;
-                statusEl.innerText = "Next daily bonus available in:";
+                statusEl.innerText = `Next bonus available in (${cooldownHours}h cooldown):`;
             }
         }
 
@@ -201,6 +227,11 @@
                 document.getElementById('balance').innerText = d.balance;
                 document.getElementById('ref-link').value = `https://t.me/bottttlospollosbot?start=${d.user_id}`;
                 
+                vipActive = d.vip_active;
+                if (vipActive) {
+                    document.getElementById('vip-status-banner').style.display = 'block';
+                }
+
                 if (d.last_free_spin) {
                     lastFreeSpinTime = d.last_free_spin;
                     updateTimer();
@@ -322,11 +353,11 @@
             });
         }
 
-        function buySpins(spins, stars) {
+        function buyPackage(packageName) {
             fetch(`${BACKEND_URL}/api/create_invoice`, {
                 method: 'POST',
                 headers: fetchHeaders,
-                body: JSON.stringify({ spins: spins, stars: stars })
+                body: JSON.stringify({ package: packageName })
             })
             .then(r => r.json())
             .then(data => {
@@ -339,6 +370,22 @@
                     });
                 } else {
                     tg.showAlert(data.message || "Invoice error");
+                }
+            });
+        }
+
+        function playArcade(gameName) {
+            fetch(`${BACKEND_URL}/api/arcade`, {
+                method: 'POST',
+                headers: fetchHeaders,
+                body: JSON.stringify({ game: gameName })
+            })
+            .then(r => r.json())
+            .then(data => {
+                tg.showAlert(data.message);
+                if (data.success) {
+                    document.getElementById('balance').innerText = data.balance;
+                    loadProfile();
                 }
             });
         }
@@ -380,7 +427,7 @@
             let copyText = document.getElementById("ref-link");
             copyText.select();
             navigator.clipboard.writeText(copyText.value);
-            tg.showAlert("Referral link copied to clipboard!");
+            tg.showAlert("Referral link copied!");
         }
 
         function closeModal() { 

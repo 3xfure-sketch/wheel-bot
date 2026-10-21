@@ -182,9 +182,8 @@
     </div>
 
     <script>
-        // Страница отдаётся самим бэкендом, поэтому адрес API = адрес страницы (HTTPS, без mixed content).
-        // Если страница лежит на другом хостинге, укажите здесь https://ваш-домен
-        const BACKEND_URL = window.location.origin;
+        // HTTPS-адрес вашего сервера с ботом подставлен автоматически
+        const BACKEND_URL = "https://murray-oxford-ball-acquire.trycloudflare.com";
 
         const tg = window.Telegram?.WebApp;
         if (tg) { tg.ready(); tg.expand(); }
@@ -219,6 +218,7 @@
 
         // Все запросы отправляют initData: сервер ОБЯЗАН проверить подпись и взять user_id оттуда
         async function api(path, options = {}) {
+            if (BACKEND_URL.includes("REPLACE-WITH")) throw new Error("Server address is not set in index.html");
             const response = await fetch(`${BACKEND_URL}${path}`, {
                 ...options,
                 headers: {

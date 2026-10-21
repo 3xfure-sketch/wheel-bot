@@ -96,30 +96,56 @@
             margin-bottom: 12px;
             text-align: center;
         }
-        .wheel-container {
+        
+        /* Стили рулетки в стиле CS2 */
+        .cs-wheel-container {
             position: relative;
-            width: 280px;
-            height: 280px;
-            margin: 10px auto;
-        }
-        canvas {
             width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            height: 110px;
+            background: #151b22;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 15px 0;
+            border: 2px solid rgba(255,255,255,0.05);
         }
-        .wheel-pointer {
+        .cs-pointer {
             position: absolute;
-            top: -10px;
+            top: 0;
             left: 50%;
             transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 12px solid transparent;
-            border-right: 12px solid transparent;
-            border-top: 24px solid var(--accent);
-            z-index: 10;
+            width: 4px;
+            height: 100%;
+            background: var(--accent);
+            z-index: 20;
+            box-shadow: 0 0 10px var(--accent);
         }
+        .cs-strip {
+            display: flex;
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            will-change: transform;
+        }
+        .cs-item {
+            min-width: 90px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #232e3c;
+            border-right: 2px solid #18222d;
+            box-sizing: border-box;
+            padding: 5px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .cs-item span {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
         .leader-item {
             display: flex;
             justify-content: space-between;
@@ -135,15 +161,17 @@
         <span class="balance" id="user-balance">⭐ 0 spins</span>
     </div>
 
-    <!-- КОЛЕСО ФОРТУНЫ -->
+    <!-- КОЛЕСО / РУЛЕТКА В СТИЛЕ CS2 -->
     <div id="tab-wheel" class="tab-content active">
         <h2>Content Wheel</h2>
         <div class="card">
-            <div class="wheel-container">
-                <div class="wheel-pointer"></div>
-                <canvas id="wheelCanvas" width="300" height="300"></canvas>
+            <div class="cs-wheel-container">
+                <div class="cs-pointer"></div>
+                <div class="cs-strip" id="csStrip">
+                    <!-- Заполняется скриптом -->
+                </div>
             </div>
-            <button class="btn" id="spinBtn" onclick="spinWheel()">Spin Wheel (1 Spin)</button>
+            <button class="btn" id="spinBtn" onclick="spinCsWheel()">Open Case (1 Spin)</button>
         </div>
         <div id="prize-result" style="margin-top: 10px; text-align:center;"></div>
     </div>
@@ -238,43 +266,27 @@
             if(tabName === 'top') loadLeaderboard();
         }
 
-        // Отрисовка колеса
-        const canvas = document.getElementById('wheelCanvas');
-        const ctx = canvas.getContext('2d');
-        const sectors = [
-            {color: '#34495e', label: 'Prize 1'},
-            {color: '#e74c3c', label: 'Prize 2'},
-            {color: '#f39c12', label: 'Prize 3'},
-            {color: '#27ae60', label: 'Prize 4'},
-            {color: '#2980b9', label: 'Prize 5'},
-            {color: '#8e44ad', label: 'Prize 6'}
+        // Инициализация ленты рулетки CS2
+        const itemsPool = [
+            { icon: '🎁', name: 'Bonus' },
+            { icon: '⭐', name: 'Spin' },
+            { icon: '👑', name: 'VIP' },
+            { icon: '📦', name: 'Pack' },
+            { icon: '🔥', name: 'Hot' },
+            { icon: '💎', name: 'Gem' }
         ];
-        let currentAngle = 0;
 
-        function drawWheel(angle = 0) {
-            const arc = Math.PI / (sectors.length / 2);
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            sectors.forEach((sector, i) => {
-                const ang = angle + i * arc;
-                ctx.beginPath();
-                ctx.fillStyle = sector.color;
-                ctx.moveTo(150, 150);
-                ctx.arc(150, 150, 150, ang, ang + arc, false);
-                ctx.lineTo(150, 150);
-                ctx.fill();
-                ctx.save();
-
-                ctx.translate(150, 150);
-                ctx.rotate(ang + arc / 2);
-                ctx.textAlign = "right";
-                ctx.fillStyle = "#fff";
-                ctx.font = "bold 14px sans-serif";
-                ctx.fillText(sector.label, 130, 10);
-                ctx.restore();
-            });
+        function initStrip() {
+            const strip = document.getElementById('csStrip');
+            let html = '';
+            // Создаем длинную ленту из элементов
+            for (let i = 0; i < 50; i++) {
+                let item = itemsPool[i % itemsPool.length];
+                html += `<div class="cs-item"><span>${item.icon}</span>${item.name}</div>`;
+            }
+            strip.innerHTML = html;
         }
-        drawWheel();
+        initStrip();
 
         async function loadProfile() {
             try {
@@ -315,7 +327,7 @@
             }
         }
 
-        async function spinWheel() {
+        async function spinCsWheel() {
             let spinBtn = document.getElementById('spinBtn');
             spinBtn.disabled = true;
 
@@ -328,29 +340,30 @@
                 return;
             }
 
-            // Анимация вращения колеса
-            let targetAngle = currentAngle + Math.PI * 10 + Math.random() * (Math.PI * 2);
-            let startTime = null;
-            let duration = 3000;
+            const strip = document.getElementById('csStrip');
+            
+            // Расчет позиции для остановки (элемент примерно посередине ленты)
+            const itemWidth = 90;
+            const randomOffset = (Math.random() - 0.5) * 60; // небольшое смещение внутри карточки
+            const targetIndex = 35; // останавливаемся на 35-м элементе
+            const containerCenter = document.querySelector('.cs-wheel-container').offsetWidth / 2;
+            const targetX = -(targetIndex * itemWidth) + containerCenter - (itemWidth / 2) + randomOffset;
 
-            function animate(time) {
-                if (!startTime) startTime = time;
-                let progress = (time - startTime) / duration;
-                if (progress > 1) progress = 1;
+            strip.style.transition = 'transform 4s cubic-bezier(0.08, 0.82, 0.15, 1)';
+            strip.style.transform = `translateX(${targetX}px)`;
+
+            setTimeout(() => {
+                spinBtn.disabled = false;
+                document.getElementById('prize-result').innerHTML = `🎉 Won: <b>${data.title}</b>! Check bot messages.`;
+                loadProfile();
                 
-                let easeOut = 1 - Math.pow(1 - progress, 3);
-                currentAngle = currentAngle + (targetAngle - currentAngle) * easeOut;
-                drawWheel(currentAngle);
-
-                if (progress < 1) {
-                    requestAnimationFrame(animate);
-                } else {
-                    spinBtn.disabled = false;
-                    document.getElementById('prize-result').innerHTML = `🎉 Won: <b>${data.title}</b>! Check bot messages.`;
-                    loadProfile();
-                }
-            }
-            requestAnimationFrame(animate);
+                // Сброс позиции ленты без анимации для следующего раза
+                setTimeout(() => {
+                    strip.style.transition = 'none';
+                    strip.style.transform = 'translateX(0px)';
+                    initStrip();
+                }, 500);
+            }, 4000);
         }
 
         async function playArcade() {

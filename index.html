@@ -11,7 +11,7 @@
             --card-bg: #232e3c;
             --text-color: #ffffff;
             --hint-color: #8a96a3;
-            --accent: #e74c3c; /* Красный цвет акцента */
+            --accent: #e74c3c;
             --gold: #f39c12;
         }
         body {
@@ -76,7 +76,7 @@
             display: flex;
         }
         .btn {
-            background: var(--accent); /* Красная кнопка */
+            background: var(--accent);
             color: #ffffff;
             border: none;
             padding: 12px 24px;
@@ -96,6 +96,30 @@
             margin-bottom: 12px;
             text-align: center;
         }
+        .wheel-container {
+            position: relative;
+            width: 280px;
+            height: 280px;
+            margin: 10px auto;
+        }
+        canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .wheel-pointer {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 12px solid transparent;
+            border-right: 12px solid transparent;
+            border-top: 24px solid var(--accent);
+            z-index: 10;
+        }
         .leader-item {
             display: flex;
             justify-content: space-between;
@@ -111,14 +135,17 @@
         <span class="balance" id="user-balance">⭐ 0 spins</span>
     </div>
 
-    <!-- КОЛЕСО -->
+    <!-- КОЛЕСО ФОРТУНЫ -->
     <div id="tab-wheel" class="tab-content active">
         <h2>Content Wheel</h2>
         <div class="card">
-            <p>Spin the wheel to get exclusive content!</p>
-            <button class="btn" onclick="spinWheel()">Spin (1 Spin)</button>
+            <div class="wheel-container">
+                <div class="wheel-pointer"></div>
+                <canvas id="wheelCanvas" width="300" height="300"></canvas>
+            </div>
+            <button class="btn" id="spinBtn" onclick="spinWheel()">Spin Wheel (1 Spin)</button>
         </div>
-        <div id="prize-result" style="margin-top: 15px; text-align:center;"></div>
+        <div id="prize-result" style="margin-top: 10px; text-align:center;"></div>
     </div>
 
     <!-- МАГАЗИН -->
@@ -211,6 +238,44 @@
             if(tabName === 'top') loadLeaderboard();
         }
 
+        // Отрисовка колеса
+        const canvas = document.getElementById('wheelCanvas');
+        const ctx = canvas.getContext('2d');
+        const sectors = [
+            {color: '#34495e', label: 'Prize 1'},
+            {color: '#e74c3c', label: 'Prize 2'},
+            {color: '#f39c12', label: 'Prize 3'},
+            {color: '#27ae60', label: 'Prize 4'},
+            {color: '#2980b9', label: 'Prize 5'},
+            {color: '#8e44ad', label: 'Prize 6'}
+        ];
+        let currentAngle = 0;
+
+        function drawWheel(angle = 0) {
+            const arc = Math.PI / (sectors.length / 2);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            sectors.forEach((sector, i) => {
+                const ang = angle + i * arc;
+                ctx.beginPath();
+                ctx.fillStyle = sector.color;
+                ctx.moveTo(150, 150);
+                ctx.arc(150, 150, 150, ang, ang + arc, false);
+                ctx.lineTo(150, 150);
+                ctx.fill();
+                ctx.save();
+
+                ctx.translate(150, 150);
+                ctx.rotate(ang + arc / 2);
+                ctx.textAlign = "right";
+                ctx.fillStyle = "#fff";
+                ctx.font = "bold 14px sans-serif";
+                ctx.fillText(sector.label, 130, 10);
+                ctx.restore();
+            });
+        }
+        drawWheel();
+
         async function loadProfile() {
             try {
                 let res = await fetch(`${BACKEND_URL}/api/profile`, { headers: getAuthHeader() });
@@ -251,14 +316,41 @@
         }
 
         async function spinWheel() {
+            let spinBtn = document.getElementById('spinBtn');
+            spinBtn.disabled = true;
+
             let res = await fetch(`${BACKEND_URL}/api/spin`, { method: 'POST', headers: getAuthHeader() });
             let data = await res.json();
-            if(data.success) {
-                document.getElementById('prize-result').innerHTML = `🎉 Won: <b>${data.title}</b>! Check bot messages.`;
-                loadProfile();
-            } else {
+            
+            if(!data.success) {
                 alert(data.message);
+                spinBtn.disabled = false;
+                return;
             }
+
+            // Анимация вращения колеса
+            let targetAngle = currentAngle + Math.PI * 10 + Math.random() * (Math.PI * 2);
+            let startTime = null;
+            let duration = 3000;
+
+            function animate(time) {
+                if (!startTime) startTime = time;
+                let progress = (time - startTime) / duration;
+                if (progress > 1) progress = 1;
+                
+                let easeOut = 1 - Math.pow(1 - progress, 3);
+                currentAngle = currentAngle + (targetAngle - currentAngle) * easeOut;
+                drawWheel(currentAngle);
+
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    spinBtn.disabled = false;
+                    document.getElementById('prize-result').innerHTML = `🎉 Won: <b>${data.title}</b>! Check bot messages.`;
+                    loadProfile();
+                }
+            }
+            requestAnimationFrame(animate);
         }
 
         async function playArcade() {

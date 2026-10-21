@@ -23,7 +23,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding-bottom: 80px;
+            padding-bottom: 95px;
         }
         .header {
             display: flex;
@@ -49,18 +49,21 @@
             background: var(--card-bg);
             display: flex;
             justify-content: space-around;
-            padding: 10px 0;
+            padding: 10px 4px;
             border-top: 1px solid rgba(255,255,255,0.1);
+            box-sizing: border-box;
         }
         .nav-item {
             background: none;
             border: none;
             color: var(--hint-color);
-            font-size: 12px;
+            font-size: 13px;
+            font-weight: 600;
             cursor: pointer;
             display: flex;
             flex-direction: column;
             align-items: center;
+            gap: 3px;
         }
         .nav-item.active {
             color: var(--accent);
@@ -128,7 +131,7 @@
             will-change: transform;
         }
         .cs-item {
-            min-width: 90px;
+            min-width: 100px;
             height: 100%;
             display: flex;
             flex-direction: column;
@@ -137,12 +140,13 @@
             background: #232e3c;
             border-right: 2px solid #18222d;
             box-sizing: border-box;
-            padding: 5px;
-            font-size: 12px;
+            padding: 6px;
+            font-size: 11px;
             font-weight: bold;
+            text-align: center;
         }
         .cs-item span {
-            font-size: 24px;
+            font-size: 22px;
             margin-bottom: 4px;
         }
 
@@ -161,17 +165,17 @@
         <span class="balance" id="user-balance">⭐ 0 spins</span>
     </div>
 
-    <!-- КОЛЕСО / РУЛЕТКА В СТИЛЕ CS2 -->
+    <!-- КОЛЕСО / РУЛЕТКА С КОНТЕНТОМ -->
     <div id="tab-wheel" class="tab-content active">
         <h2>Content Wheel</h2>
         <div class="card">
             <div class="cs-wheel-container">
                 <div class="cs-pointer"></div>
                 <div class="cs-strip" id="csStrip">
-                    <!-- Заполняется скриптом -->
+                    <!-- Заполняется скриптом с твоим контентом -->
                 </div>
             </div>
-            <button class="btn" id="spinBtn" onclick="spinCsWheel()">Open Case (1 Spin)</button>
+            <button class="btn" id="spinBtn" onclick="spinCsWheel()">Spin Wheel (1 Spin)</button>
         </div>
         <div id="prize-result" style="margin-top: 10px; text-align:center;"></div>
     </div>
@@ -236,12 +240,12 @@
 
     <!-- НАВИГАЦИЯ -->
     <div class="nav">
-        <button class="nav-item active" onclick="switchTab('wheel', this)">Wheel</button>
-        <button class="nav-item" onclick="switchTab('shop', this)">Shop</button>
-        <button class="nav-item" onclick="switchTab('games', this)">Games</button>
-        <button class="nav-item" onclick="switchTab('bonuses', this)">Bonuses</button>
-        <button class="nav-item" onclick="switchTab('top', this)">Top</button>
-        <button class="nav-item" onclick="switchTab('profile', this)">Profile</button>
+        <button class="nav-item active" onclick="switchTab('wheel', this)"><span style="font-size: 18px;">🎡</span>Wheel</button>
+        <button class="nav-item" onclick="switchTab('shop', this)"><span style="font-size: 18px;">🛍️</span>Shop</button>
+        <button class="nav-item" onclick="switchTab('games', this)"><span style="font-size: 18px;">🎮</span>Games</button>
+        <button class="nav-item" onclick="switchTab('bonuses', this)"><span style="font-size: 18px;">🎁</span>Bonuses</button>
+        <button class="nav-item" onclick="switchTab('top', this)"><span style="font-size: 18px;">🏆</span>Top</button>
+        <button class="nav-item" onclick="switchTab('profile', this)"><span style="font-size: 18px;">👤</span>Profile</button>
     </div>
 
     <script>
@@ -266,20 +270,19 @@
             if(tabName === 'top') loadLeaderboard();
         }
 
-        // Инициализация ленты рулетки CS2
+        // Твой контент для рулетки (фото, видео, эксклюзив)
         const itemsPool = [
-            { icon: '🎁', name: 'Bonus' },
-            { icon: '⭐', name: 'Spin' },
-            { icon: '👑', name: 'VIP' },
-            { icon: '📦', name: 'Pack' },
-            { icon: '🔥', name: 'Hot' },
-            { icon: '💎', name: 'Gem' }
+            { icon: '📸', name: 'Photo #1' },
+            { icon: '🎬', name: 'Video Pack' },
+            { icon: '🔥', name: 'Exclusive' },
+            { icon: '📸', name: 'Photo #2' },
+            { icon: '🎁', name: 'Secret Drop' },
+            { icon: '🎬', name: 'Backstage' }
         ];
 
         function initStrip() {
             const strip = document.getElementById('csStrip');
             let html = '';
-            // Создаем длинную ленту из элементов
             for (let i = 0; i < 50; i++) {
                 let item = itemsPool[i % itemsPool.length];
                 html += `<div class="cs-item"><span>${item.icon}</span>${item.name}</div>`;
@@ -341,11 +344,9 @@
             }
 
             const strip = document.getElementById('csStrip');
-            
-            // Расчет позиции для остановки (элемент примерно посередине ленты)
-            const itemWidth = 90;
-            const randomOffset = (Math.random() - 0.5) * 60; // небольшое смещение внутри карточки
-            const targetIndex = 35; // останавливаемся на 35-м элементе
+            const itemWidth = 100;
+            const randomOffset = (Math.random() - 0.5) * 60;
+            const targetIndex = 35;
             const containerCenter = document.querySelector('.cs-wheel-container').offsetWidth / 2;
             const targetX = -(targetIndex * itemWidth) + containerCenter - (itemWidth / 2) + randomOffset;
 
@@ -357,7 +358,6 @@
                 document.getElementById('prize-result').innerHTML = `🎉 Won: <b>${data.title}</b>! Check bot messages.`;
                 loadProfile();
                 
-                // Сброс позиции ленты без анимации для следующего раза
                 setTimeout(() => {
                     strip.style.transition = 'none';
                     strip.style.transform = 'translateX(0px)';

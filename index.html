@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -52,36 +52,35 @@
 <body>
     <div class="header">
         <div>👤 ID: <span id="user-id">...</span></div>
-        <div class="balance-badge">⭐ <span id="balance">0</span> спинов</div>
+        <div class="balance-badge">⭐ <span id="balance">0</span> spins</div>
     </div>
 
-    <h3>🎁 Рулетка Контента (CS2 Style)</h3>
+    <h3>🎁 Content Roulette (CS2 Style)</h3>
 
     <div class="roulette-wrapper">
         <div class="pointer"></div>
         <div class="tape" id="tape"></div>
     </div>
 
-    <button class="btn-spin" id="spin-btn" onclick="startSpin()">🚀 КРУТИТЬ РУЛЕТКУ</button>
+    <button class="btn-spin" id="spin-btn" onclick="startSpin()">🚀 SPIN ROULETTE</button>
 
     <div class="prize-modal" id="prize-modal">
         <div class="prize-box">
-            <h2 style="color: #ffd700; margin-top:0;">🎉 ВЫИГРЫШ!</h2>
+            <h2 style="color: #ffd700; margin-top:0;">🎉 YOU WON!</h2>
             <p id="prize-title" style="font-size: 16px; margin: 15px 0;"></p>
-            <button class="btn-spin" style="background: #2481cc;" onclick="closeModal()">ЗАБРАТЬ</button>
+            <button class="btn-spin" style="background: #2481cc;" onclick="closeModal()">CLAIM</button>
         </div>
     </div>
 
     <script>
-        // АДРЕС ТВОЕГО БЭКЕНДА (меняй на ссылку от ngrok при каждом новом запуске)
-        const BACKEND_URL = "https://твой-ngrok-домен.ngrok-free.app";
+        // Ссылка вашего статического туннеля ngrok уже настроена
+        const BACKEND_URL = "https://stiffly-degrading-dimly.ngrok-free.dev";
 
         const tg = window.Telegram.WebApp;
         tg.expand();
         let dbItems = [];
         let isSpinning = false;
 
-        // Загрузка профиля
         fetch(`${BACKEND_URL}/api/profile`, { 
             headers: { 'Authorization': tg.initData } 
         })
@@ -89,13 +88,12 @@
         .then(d => {
             document.getElementById('user-id').innerText = d.user_id;
             document.getElementById('balance').innerText = d.balance;
-        }).catch(err => console.error("Ошибка загрузки профиля:", err));
+        }).catch(err => console.error("Profile load error:", err));
 
-        // Загрузка контента для ленты рулетки
         fetch(`${BACKEND_URL}/api/content_items`)
             .then(r => r.json())
             .then(d => { dbItems = d.items; buildTape(); })
-            .catch(err => console.error("Ошибка загрузки контента:", err));
+            .catch(err => console.error("Content load error:", err));
 
         function buildTape() {
             const tape = document.getElementById('tape');
@@ -151,7 +149,7 @@
             .catch(err => {
                 isSpinning = false;
                 document.getElementById('spin-btn').disabled = false;
-                tg.showAlert("Ошибка соединения с сервером!");
+                tg.showAlert("Server connection error!");
             });
         }
         function closeModal() { document.getElementById('prize-modal').style.display = 'none'; }

@@ -6,273 +6,164 @@
     <title>Content Wheel</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            user-select: none;
-        }
-
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
         body {
             background-color: #12151c;
             color: #ffffff;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             padding: 12px;
-            padding-bottom: 70px;
+            padding-bottom: 75px;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
 
-        /* Баннер вверху */
-        .top-banner {
-            font-size: 11px;
-            color: #7a8290;
-            margin-bottom: 12px;
-            text-align: center;
-        }
-
-        /* Шапка с ID и спинами */
+        .top-banner { font-size: 11px; color: #7a8290; margin-bottom: 12px; text-align: center; }
         .top-bar {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            font-size: 14px;
-            font-weight: bold;
+            width: 100%; display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 15px; font-size: 14px; font-weight: bold;
         }
+        .user-id { color: #e1e4ea; }
+        .spins-count { color: #ffb703; display: flex; align-items: center; gap: 4px; }
+        .vip-badge { color: #ff4d3d; font-size: 11px; margin-left: 4px; border: 1px solid #ff4d3d; padding: 1px 4px; border-radius: 4px; }
 
-        .user-id {
-            color: #e1e4ea;
-        }
+        .tab-screen { display: none; width: 100%; max-width: 400px; flex-direction: column; align-items: center; }
+        .tab-screen.active { display: flex; }
+        .main-title { font-size: 20px; font-weight: 800; margin-bottom: 15px; text-align: center; }
 
-        .spins-count {
-            color: #ffb703;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        /* Заголовок */
-        .main-title {
-            font-size: 20px;
-            font-weight: 800;
-            margin-bottom: 15px;
-        }
-
-        /* Блок рулетки (Карточки) */
+        /* WHEEL TAB */
         .wheel-container {
-            width: 100%;
-            background: #181c26;
-            border: 1px solid #232936;
-            border-radius: 16px;
-            padding: 15px 10px;
-            position: relative;
-            margin-bottom: 15px;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            overflow: hidden;
+            width: 100%; background: #181c26; border: 1px solid #232936;
+            border-radius: 16px; padding: 15px 10px; position: relative;
+            margin-bottom: 15px; display: flex; justify-content: space-around;
+            align-items: center; overflow: hidden;
         }
-
-        /* Красная линия прицела */
         .wheel-pointer {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            left: 50%;
-            width: 2px;
-            background: #ff3b30;
-            box-shadow: 0 0 8px #ff3b30;
-            z-index: 10;
-            transform: translateX(-50%);
+            position: absolute; top: 0; bottom: 0; left: 50%; width: 2px;
+            background: #ff3b30; box-shadow: 0 0 8px #ff3b30; z-index: 10; transform: translateX(-50%);
         }
+        .prize-card { display: flex; flex-direction: column; align-items: center; gap: 6px; opacity: 0.7; font-size: 11px; font-weight: 600; }
+        .prize-card.active { opacity: 1; }
+        .prize-icon { font-size: 22px; }
 
-        .prize-card {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 6px;
-            opacity: 0.7;
-            font-size: 11px;
-            font-weight: 600;
-        }
-
-        .prize-card.active {
-            opacity: 1;
-        }
-
-        .prize-icon {
-            font-size: 22px;
-        }
-
-        /* Кнопка вращения */
         .spin-button {
-            width: 100%;
-            background: linear-gradient(180deg, #ff4d3d 0%, #e63020 100%);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            padding: 14px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(230, 48, 32, 0.4);
-            margin-bottom: 20px;
+            width: 100%; background: linear-gradient(180deg, #ff4d3d 0%, #e63020 100%);
+            color: white; border: none; border-radius: 12px; padding: 14px;
+            font-size: 16px; font-weight: bold; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(230, 48, 32, 0.4); margin-bottom: 10px;
         }
-
-        .spin-button:active {
-            transform: scale(0.98);
+        .spin-button:disabled {
+            background: #2a2e3d; color: #646c7a; box-shadow: none; cursor: not-allowed;
         }
+        .spin-button:active:not(:disabled) { transform: scale(0.98); }
 
-        /* Раздел Spins Packs */
-        .section-container {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin-bottom: 20px;
-        }
+        .timer-text { font-size: 12px; color: #ffb703; margin-bottom: 15px; text-align: center; font-weight: 600; }
 
-        .spins-packs-title {
-            color: #ffffff;
-            font-size: 16px;
-            font-weight: bold;
-            margin-bottom: 8px;
-            text-align: center;
-        }
-
+        .section-container { width: 100%; display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+        .spins-packs-title { color: #ffffff; font-size: 16px; font-weight: bold; margin-bottom: 8px; text-align: center; }
         .stars-pack-btn {
-            width: 100%;
-            background: linear-gradient(180deg, #ff4d3d 0%, #e63020 100%);
-            color: #ffffff;
-            border: none;
-            border-radius: 12px;
-            padding: 13px;
-            font-size: 15px;
-            font-weight: bold;
-            cursor: pointer;
+            width: 100%; background: linear-gradient(180deg, #ff4d3d 0%, #e63020 100%);
+            color: #ffffff; border: none; border-radius: 12px; padding: 13px;
+            font-size: 15px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(230, 48, 32, 0.3);
+        }
+        .stars-pack-btn:active { transform: scale(0.98); }
+
+        /* SHOP TAB */
+        .vip-card-btn {
+            width: 100%; background: linear-gradient(180deg, #ff4d3d 0%, #e63020 100%);
+            color: #ffffff; border: none; border-radius: 12px; padding: 14px;
+            font-size: 16px; font-weight: bold; cursor: pointer; margin-bottom: 10px;
             box-shadow: 0 4px 12px rgba(230, 48, 32, 0.3);
         }
 
-        .stars-pack-btn:active {
-            transform: scale(0.98);
+        .info-card {
+            width: 100%; background: #181c26; border: 1px solid #232936;
+            border-radius: 12px; padding: 15px; margin-bottom: 10px; text-align: center;
         }
 
-        /* Нижнее меню навигации */
+        /* BOTTOM NAV (5 элементов без Bonuses) */
         .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: #12151c;
-            border-top: 1px solid #1e2330;
-            display: flex;
-            justify-content: space-around;
-            padding: 8px 0;
-            z-index: 100;
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: #12151c; border-top: 1px solid #1e2330;
+            display: flex; justify-content: space-around; padding: 8px 0; z-index: 100;
         }
-
-        .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 3px;
-            font-size: 10px;
-            color: #646c7a;
-            cursor: pointer;
-            text-decoration: none;
-        }
-
-        .nav-item.active {
-            color: #ff4d3d;
-        }
-
-        .nav-icon {
-            font-size: 16px;
-        }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10px; color: #646c7a; cursor: pointer; }
+        .nav-item.active { color: #ff4d3d; }
+        .nav-icon { font-size: 16px; }
     </style>
 </head>
 <body>
 
-    <!-- 1. Верхний информационный баннер -->
     <div class="top-banner">
-        Free spin every 12 hours & 20% discount on all purchases!
+        Free spin every 24h (VIP every 12h) & 20% discount on purchases!
     </div>
 
-    <!-- 2. Панель пользователя -->
     <div class="top-bar">
-        <div class="user-id" id="user-id">ID: ...</div>
+        <div class="user-id" id="user-id">ID: ... <span id="vip-tag"></span></div>
         <div class="spins-count">★ <span id="spins-count">0</span> spins</div>
     </div>
 
-    <!-- 3. Название приложения -->
-    <div class="main-title">Content Wheel</div>
+    <!-- 1. WHEEL TAB -->
+    <div id="tab-wheel" class="tab-screen active">
+        <div class="main-title">Content Wheel</div>
 
-    <!-- 4. Визуальный блок с призами колеса -->
-    <div class="wheel-container">
-        <div class="wheel-pointer"></div>
-        <div class="prize-card">
-            <div class="prize-icon">📷</div>
-            <div>Photo #1</div>
+        <div class="wheel-container">
+            <div class="wheel-pointer"></div>
+            <div class="prize-card"><div class="prize-icon">📷</div><div>Photo #1</div></div>
+            <div class="prize-card active"><div class="prize-icon">🎬</div><div>Video Pack</div></div>
+            <div class="prize-card"><div class="prize-icon">🔥</div><div>Exclusive</div></div>
         </div>
-        <div class="prize-card active">
-            <div class="prize-icon">🎬</div>
-            <div>Video Pack</div>
-        </div>
-        <div class="prize-card">
-            <div class="prize-icon">🔥</div>
-            <div>Exclusive</div>
+
+        <button id="spin-btn" class="spin-button" onclick="spinWheel()">Spin Wheel</button>
+        <div id="timer-display" class="timer-text"></div>
+
+        <div class="spins-packs-title">★ Spins Packs</div>
+        <div class="section-container">
+            <button class="stars-pack-btn" onclick="buySpinsPackage(1, 45)">🎰 1 Spin — 45 Stars</button>
+            <button class="stars-pack-btn" onclick="buySpinsPackage(3, 125)">🎰 3 Spins — 125 Stars</button>
+            <button class="stars-pack-btn" onclick="buySpinsPackage(5, 190)">🎰 5 Spins — 190 Stars</button>
+            <button class="stars-pack-btn" onclick="buySpinsPackage(10, 350)">🎰 10 Spins — 350 Stars</button>
         </div>
     </div>
 
-    <!-- 5. Главная кнопка вращения -->
-    <button id="spin-btn" class="spin-button" onclick="spinWheel()">Spin Wheel (1 Spin)</button>
-
-    <!-- 6. Пакеты спинов (Spins Packs) -->
-    <div class="spins-packs-title">★ Spins Packs</div>
-    <div class="section-container">
-        <button class="stars-pack-btn" onclick="buySpinsPackage(1, 45)">
-            🎰 1 Spin — 45 Stars
-        </button>
-        <button class="stars-pack-btn" onclick="buySpinsPackage(3, 140)">
-            🎰 3 Spins — 140 Stars
-        </button>
-        <button class="stars-pack-btn" onclick="buySpinsPackage(5, 190)">
-            🎰 5 Spins — 190 Stars
-        </button>
-        <button class="stars-pack-btn" onclick="buySpinsPackage(10, 350)">
-            🎰 10 Spins — 350 Stars
-        </button>
+    <!-- 2. SHOP TAB -->
+    <div id="tab-shop" class="tab-screen">
+        <div class="main-title">Store & VIP Passes</div>
+        <div class="section-container">
+            <button class="vip-card-btn" onclick="buyVIP(7, 90)">🎟️ VIP 7 Days — 90 Stars</button>
+            <button class="vip-card-btn" onclick="buyVIP(30, 190)">🎟️ VIP 30 Days — 190 Stars</button>
+        </div>
     </div>
 
-    <!-- 7. Нижняя навигация -->
+    <!-- 3. GAMES TAB -->
+    <div id="tab-games" class="tab-screen">
+        <div class="main-title">Mini Games</div>
+        <div class="info-card">🎮 Mini games coming soon!</div>
+    </div>
+
+    <!-- 4. TOP TAB -->
+    <div id="tab-top" class="tab-screen">
+        <div class="main-title">Leaderboard</div>
+        <div class="info-card">🏆 Top players list</div>
+    </div>
+
+    <!-- 5. PROFILE TAB -->
+    <div id="tab-profile" class="tab-screen">
+        <div class="main-title">User Profile</div>
+        <div class="info-card">
+            👤 <b>Telegram ID:</b> <span id="profile-user-id">...</span><br><br>
+            ⭐ <b>Spins Balance:</b> <span id="profile-spins-count">0</span><br><br>
+            👑 <b>Status:</b> <span id="profile-status">Regular</span>
+        </div>
+    </div>
+
+    <!-- BOTTOM NAV (Без вкладки Bonuses) -->
     <div class="bottom-nav">
-        <div class="nav-item active" data-tab="wheel">
-            <span class="nav-icon">🎡</span>
-            <span>Wheel</span>
-        </div>
-        <div class="nav-item" data-tab="shop">
-            <span class="nav-icon">🛍️</span>
-            <span>Shop</span>
-        </div>
-        <div class="nav-item" data-tab="games">
-            <span class="nav-icon">🎮</span>
-            <span>Games</span>
-        </div>
-        <div class="nav-item" data-tab="bonuses">
-            <span class="nav-icon">🎁</span>
-            <span>Bonuses</span>
-        </div>
-        <div class="nav-item" data-tab="top">
-            <span class="nav-icon">🏆</span>
-            <span>Top</span>
-        </div>
-        <div class="nav-item" data-tab="profile">
-            <span class="nav-icon">👤</span>
-            <span>Profile</span>
-        </div>
+        <div class="nav-item active" onclick="switchTab('wheel', this)"><span class="nav-icon">🎡</span><span>Wheel</span></div>
+        <div class="nav-item" onclick="switchTab('shop', this)"><span class="nav-icon">🛍️</span><span>Shop</span></div>
+        <div class="nav-item" onclick="switchTab('games', this)"><span class="nav-icon">🎮</span><span>Games</span></div>
+        <div class="nav-item" onclick="switchTab('top', this)"><span class="nav-icon">🏆</span><span>Top</span></div>
+        <div class="nav-item" onclick="switchTab('profile', this)"><span class="nav-icon">👤</span><span>Profile</span></div>
     </div>
 
     <script>
@@ -280,41 +171,96 @@
         const tg = window.Telegram?.WebApp;
         if (tg) tg.expand();
 
+        let nextFreeSpinTime = null;
+        let timerInterval = null;
+
         async function loadUserData() {
             const userId = tg?.initDataUnsafe?.user?.id || 123456789;
             document.getElementById('user-id').innerText = `ID: ${userId}`;
+            document.getElementById('profile-user-id').innerText = userId;
 
             try {
                 const response = await fetch(`${BACKEND_URL}/user/${userId}`);
                 const data = await response.json();
-                if (data && data.spins !== undefined) {
+                if (data) {
                     document.getElementById('spins-count').innerText = data.spins;
+                    document.getElementById('profile-spins-count').innerText = data.spins;
+                    
+                    if (data.is_vip) {
+                        document.getElementById('vip-tag').innerHTML = `<span class="vip-badge">VIP</span>`;
+                        document.getElementById('profile-status').innerText = "VIP Member 👑";
+                    }
+
+                    if (data.next_free_spin_timestamp) {
+                        nextFreeSpinTime = data.next_free_spin_timestamp;
+                        startCountdown();
+                    }
                 }
-            } catch (e) {
-                console.error("Ошибка загрузки данных:", e);
-            }
+            } catch (e) { console.error("Ошибка загрузки:", e); }
         }
 
-        function spinWheel() {
-            tg?.showAlert("Вращаем рулетку!");
+        function startCountdown() {
+            if (timerInterval) clearInterval(timerInterval);
+            
+            const btn = document.getElementById('spin-btn');
+            const timerDisplay = document.getElementById('timer-display');
+
+            timerInterval = setInterval(() => {
+                const now = Math.floor(Date.now() / 1000);
+                const diff = nextFreeSpinTime - now;
+
+                if (diff <= 0) {
+                    clearInterval(timerInterval);
+                    btn.disabled = false;
+                    btn.innerText = "Spin Wheel (Free)";
+                    timerDisplay.innerText = "🎁 Free spin available now!";
+                } else {
+                    btn.disabled = true;
+                    const hours = Math.floor(diff / 3600);
+                    const minutes = Math.floor((diff % 3600) / 60);
+                    const seconds = diff % 60;
+                    btn.innerText = `Spin Wheel (1 Spin)`;
+                    timerDisplay.innerText = `Next Free Spin in: ${hours}h ${minutes}m ${seconds}s`;
+                }
+            }, 1000);
+        }
+
+        function switchTab(tabName, element) {
+            document.querySelectorAll('.tab-screen').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            element.classList.add('active');
+        }
+
+        async function spinWheel() {
+            const userId = tg?.initDataUnsafe?.user?.id || 123456789;
+            try {
+                const response = await fetch(`${BACKEND_URL}/spin`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId })
+                });
+                const res = await response.json();
+                if (res.success) {
+                    tg?.showAlert(`🎉 Вы выиграли: ${res.prize}!`);
+                    loadUserData();
+                } else {
+                    tg?.showAlert(res.message || "Недостаточно спинов!");
+                }
+            } catch (err) {
+                tg?.showAlert("Ошибка прокрутки.");
+            }
         }
 
         async function buySpinsPackage(spinsAmount, starsPrice) {
             const userId = tg?.initDataUnsafe?.user?.id;
-            if (!userId) {
-                alert("Telegram ID не определен.");
-                return;
-            }
+            if (!userId) return alert("Telegram ID не найден.");
 
             try {
                 const response = await fetch(`${BACKEND_URL}/create-stars-invoice`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        user_id: userId,
-                        spins_amount: spinsAmount,
-                        stars_price: starsPrice 
-                    })
+                    body: JSON.stringify({ user_id: userId, spins_amount: spinsAmount, stars_price: starsPrice })
                 });
                 const data = await response.json();
                 if (data.invoice_link) {
@@ -325,23 +271,30 @@
                         }
                     });
                 }
-            } catch (err) {
-                console.error(err);
-            }
+            } catch (err) { console.error(err); }
         }
 
-        // Логика работы нижнего меню
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.addEventListener('click', function() {
-                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-                this.classList.add('active');
-                
-                const tabName = this.getAttribute('data-tab');
-                if (tabName !== 'wheel') {
-                    tg?.showAlert(`Раздел ${tabName.toUpperCase()} откроется в следующем обновлении!`);
+        async function buyVIP(days, price) {
+            const userId = tg?.initDataUnsafe?.user?.id;
+            if (!userId) return alert("Telegram ID не найден.");
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/create-vip-invoice`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId, vip_days: days, stars_price: price })
+                });
+                const data = await response.json();
+                if (data.invoice_link) {
+                    tg.openInvoice(data.invoice_link, (status) => {
+                        if (status === 'paid') {
+                            tg.showAlert(`👑 VIP-статус на ${days} дней активирован!`);
+                            loadUserData();
+                        }
+                    });
                 }
-            });
-        });
+            } catch (err) { console.error(err); }
+        }
 
         loadUserData();
     </script>

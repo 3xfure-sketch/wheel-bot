@@ -170,6 +170,35 @@
             🏅 <b>Points this week:</b> <span id="profile-week-points">0</span><br><br>
             👑 <b>Status:</b> <span id="profile-status">Regular</span>
         </div>
+
+        <div class="main-title" style="margin-top:20px;">Invite Friends</div>
+        <div class="info-card">
+            <b>Your referral link</b>
+            <div style="display:flex; gap:8px; margin-top:10px; align-items:center;">
+                <input id="referral-link" type="text" readonly
+                    placeholder="Loading your referral link..."
+                    style="min-width:0; flex:1; padding:10px; border-radius:8px; border:1px solid #444; background:rgba(0,0,0,0.15); color:inherit;">
+                <button type="button" onclick="copyReferralLink()"
+                    style="padding:10px 12px; border:0; border-radius:8px; cursor:pointer;">Copy Link</button>
+            </div>
+            <p style="font-size:13px; line-height:1.5; margin-bottom:0;">
+                Invite a friend. When a new user joins through your link, you earn
+                <b>+1 spin</b> and <b>+0.5 weekly leaderboard points</b>.
+            </p>
+        </div>
+
+        <div class="info-card">
+            <b>Friends invited:</b> <span id="referral-count">0</span><br><br>
+            <b>Referral spins earned:</b> <span id="referral-spins">0</span><br><br>
+            <b>Referral points earned:</b> <span id="referral-points">0</span>
+        </div>
+
+        <div class="main-title">Invited Users</div>
+        <div id="referral-users">
+            <div class="info-card">Your invited users will appear here.</div>
+        </div>
+        <p id="referral-status" role="status"
+            style="font-size:12px; color:#7a8290; text-align:center;"></p>
     </div>
 
     <!-- BOTTOM NAV -->
@@ -182,8 +211,9 @@
     </div>
 
     <script>
-        // HTTPS-адрес вашего сервера с ботом подставлен автоматически
-     const BACKEND_URL = "https://gnome-threatening-est-hung.trycloudflare.com";
+        // Страница отдаётся самим бэкендом, поэтому адрес API = адрес страницы (HTTPS, без mixed content).
+        // Если страница лежит на другом хостинге, укажите здесь https://ваш-домен
+        const BACKEND_URL = "https://gnome-threatening-est-hung.trycloudflare.com";
 
         const tg = window.Telegram?.WebApp;
         if (tg) { tg.ready(); tg.expand(); }
@@ -218,7 +248,6 @@
 
         // Все запросы отправляют initData: сервер ОБЯЗАН проверить подпись и взять user_id оттуда
         async function api(path, options = {}) {
-            if (BACKEND_URL.includes("REPLACE-WITH")) throw new Error("Server address is not set in index.html");
             const response = await fetch(`${BACKEND_URL}${path}`, {
                 ...options,
                 headers: {
@@ -308,12 +337,97 @@
             }, 1000);
         }
 
+        async function loadReferrals() {
+            const status = document.getElementById('referral-status');
+            const list = document.getElementById('referral-users');
+            status.textContent = "Loading referral details...";
+            list.replaceChildren();
+
+            try {
+                const data = await api('/referrals');
+                document.getElementById('referral-link').value = data.referral_link || "";
+                document.getElementById('referral-count').textContent = Number(data.invite_count) || 0;
+                document.getElementById('referral-spins').textContent = Number(data.spins_earned) || 0;
+                document.getElementById('referral-points').textContent =
+                    (Number(data.points_earned) || 0).toFixed(1);
+
+                const users = Array.isArray(data.invited_users) ? data.invited_users : [];
+                if (users.length === 0) {
+                    const empty = document.createElement('div');
+                    empty.className = 'info-card';
+                    empty.textContent = "No invited users yet. Share your referral link to get started!";
+                    list.appendChild(empty);
+                } else {
+                    users.forEach(user => {
+                        const row = document.createElement('div');
+                        row.className = 'info-card';
+
+                        const name = document.createElement('b');
+                        name.textContent = user.name || 'Telegram user';
+                        row.appendChild(name);
+
+                        if (user.username) {
+                            const username = document.createElement('div');
+                            username.textContent = '@' + user.username;
+                            username.style.fontSize = '12px';
+                            username.style.color = '#7a8290';
+                            row.appendChild(username);
+                        }
+
+                        if (user.joined_at) {
+                            const joined = document.createElement('div');
+                            joined.textContent = 'Joined: ' +
+                                new Date(Number(user.joined_at) * 1000).toLocaleDateString();
+                            joined.style.fontSize = '12px';
+                            joined.style.color = '#7a8290';
+                            row.appendChild(joined);
+                        }
+
+                        list.appendChild(row);
+                    });
+                }
+                status.textContent = "";
+            } catch (error) {
+                console.error("Referral load error:", error);
+                status.textContent =
+                    "Could not load referral details. Open the Mini App from Telegram and try again.";
+            }
+        }
+
+        async function copyReferralLink() {
+            const field = document.getElementById('referral-link');
+            const link = field.value.trim();
+
+            if (!link) {
+                alertMsg("Your referral link is not ready yet.");
+                return;
+            }
+
+            try {
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(link);
+                } else {
+                    field.focus();
+                    field.select();
+                    if (!document.execCommand('copy')) throw new Error("Clipboard copy failed");
+                    field.setSelectionRange(0, 0);
+                }
+                alertMsg("Referral link copied!");
+            } catch (error) {
+                console.error("Copy link error:", error);
+                alertMsg("Could not copy automatically. Please select and copy the link.");
+                field.focus();
+                field.select();
+            }
+        }
+
         function switchTab(tabName, element) {
             document.querySelectorAll('.tab-screen').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
             document.getElementById(`tab-${tabName}`).classList.add('active');
             element.classList.add('active');
             if (tabName === 'top') loadLeaderboard();
+            if (tabName === 'profile') loadReferrals();
         }
 
         // ---------- Анимация колеса ----------

@@ -82,6 +82,85 @@
         .leader-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #232936; font-size: 14px; }
         .leader-row:last-child { border-bottom: none; }
 
+        /* RESULT CHEST */
+        .chest-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(5, 7, 12, .94);
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity .35s ease, visibility .35s ease;
+        }
+        .chest-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+        .chest-scene { width: 100%; max-width: 340px; text-align: center; }
+        .chest-title {
+            color: #ffd978;
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 28px;
+        }
+        .chest-icon {
+            font-size: 100px;
+            line-height: 1.4;
+            filter: drop-shadow(0 0 22px rgba(255, 190, 70, .35));
+            transform: scale(.65);
+            transition: transform .65s cubic-bezier(.2, .8, .2, 1);
+        }
+        .chest-overlay.opened .chest-icon {
+            transform: scale(1.12) rotate(-5deg);
+        }
+        .chest-result {
+            margin-top: 25px;
+            padding: 20px;
+            border: 1px solid #d9a83e;
+            border-radius: 16px;
+            background: linear-gradient(145deg, rgba(255, 217, 120, .16), rgba(24, 28, 38, .98));
+            box-shadow: 0 12px 40px rgba(0, 0, 0, .35);
+            opacity: 0;
+            transform: translateY(18px);
+            transition: opacity .45s ease .18s, transform .45s ease .18s;
+        }
+        .chest-overlay.opened .chest-result {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .chest-result-label {
+            color: #ffd978;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+        .chest-result-text {
+            color: #fff;
+            font-size: 15px;
+            line-height: 1.5;
+            overflow-wrap: anywhere;
+            user-select: text;
+        }
+        .chest-close {
+            width: 100%;
+            margin-top: 18px;
+            padding: 14px;
+            border: 0;
+            border-radius: 12px;
+            color: #241b0c;
+            background: linear-gradient(180deg, #ffe39a, #dca638);
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
         /* BOTTOM NAV */
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; right: 0;
@@ -201,6 +280,19 @@
             style="font-size:12px; color:#7a8290; text-align:center;"></p>
     </div>
 
+    <!-- CHEST RESULT OVERLAY -->
+    <div id="chest-overlay" class="chest-overlay" aria-hidden="true">
+        <div class="chest-scene">
+            <div class="chest-title">YOUR RESULT</div>
+            <div class="chest-icon" aria-hidden="true">🎁</div>
+            <div class="chest-result">
+                <div class="chest-result-label">RESULT CONFIRMED</div>
+                <div id="chest-result-text" class="chest-result-text"></div>
+            </div>
+            <button id="chest-close" class="chest-close" type="button">Continue</button>
+        </div>
+    </div>
+
     <!-- BOTTOM NAV -->
     <div class="bottom-nav">
         <div class="nav-item active" onclick="switchTab('wheel', this)"><span class="nav-icon">🎡</span><span>Wheel</span></div>
@@ -211,8 +303,7 @@
     </div>
 
     <script>
-        // Страница отдаётся самим бэкендом, поэтому адрес API = адрес страницы (HTTPS, без mixed content).
-        // Если страница лежит на другом хостинге, укажите здесь https://ваш-домен
+        // Страница может быть на отдельном хостинге; API остаётся на BACKEND_URL.
         const BACKEND_URL = "https://gnome-threatening-est-hung.trycloudflare.com";
 
         const tg = window.Telegram?.WebApp;
@@ -313,7 +404,7 @@
                 btn.disabled = isSpinning;
                 btn.innerText = "Spin Wheel (Free)";
                 timerDisplay.innerText = "🎁 Free spin available now!";
-                return true; // таймер больше не нужен
+                return true;
             }
 
             const diff = nextFreeSpinTime - Math.floor(Date.now() / 1000);
@@ -430,24 +521,35 @@
             if (tabName === 'profile') loadReferrals();
         }
 
-        // ---------- Анимация колеса ----------
+        // ---------- Показ результата в сундуке ----------
         function animateWheel(prizeName) {
-            const cards = Array.from(document.querySelectorAll('.prize-card'));
-            const name = String(prizeName || '').toLowerCase();
-            let target = cards.findIndex(c => name.includes(c.dataset.prize));
-            if (target < 0) target = Math.floor(Math.random() * cards.length);
+            const overlay = document.getElementById('chest-overlay');
+            const result = document.getElementById('chest-result-text');
+            const close = document.getElementById('chest-close');
+
+            // Показываем только результат, который вернул сервер. Здесь нет выбора приза.
+            result.textContent = prizeName || 'Результат получен.';
+            overlay.classList.remove('opened');
+            overlay.classList.add('visible');
+            overlay.setAttribute('aria-hidden', 'false');
 
             return new Promise(resolve => {
-                const totalSteps = cards.length * 4 + target;
-                let step = 0;
-                const tick = () => {
-                    cards.forEach(c => c.classList.remove('active'));
-                    cards[step % cards.length].classList.add('active');
-                    step++;
-                    if (step > totalSteps) return resolve();
-                    setTimeout(tick, 70 + step * 6); // замедление к концу
+                let finished = false;
+
+                const finish = () => {
+                    if (finished) return;
+                    finished = true;
+                    overlay.classList.remove('opened', 'visible');
+                    overlay.setAttribute('aria-hidden', 'true');
+                    close.removeEventListener('click', finish);
+                    resolve();
                 };
-                tick();
+
+                close.addEventListener('click', finish, { once: true });
+
+                requestAnimationFrame(() => {
+                    setTimeout(() => overlay.classList.add('opened'), 120);
+                });
             });
         }
 
@@ -463,7 +565,6 @@
                 const res = await post('/spin', { user_id: userId });
                 if (res.success) {
                     await animateWheel(res.prize);
-                    alertMsg(`🎉 You won: ${res.prize}!`);
                 } else {
                     alertMsg(res.message || "No spins available!");
                 }
@@ -484,7 +585,6 @@
                 const data = await api('/leaderboard');
                 const players = Array.isArray(data.players) ? data.players : [];
 
-                // Моя строка: баллы, место и время до конца недели
                 const left = Math.max(0, Number(data.week_ends) - Math.floor(Date.now() / 1000));
                 const days = Math.floor(left / 86400);
                 const hours = Math.floor((left % 86400) / 3600);
@@ -527,7 +627,6 @@
                 } else if (status === 'failed') {
                     alertMsg("Payment failed. Please try again.");
                 }
-                // 'cancelled' / 'pending' — ничего не делаем
             });
         }
 
